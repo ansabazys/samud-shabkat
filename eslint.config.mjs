@@ -1,2 +1,3 @@
-import config from "./packages/config/src/eslint.config.mjs";
-export default config;
+import js from "@eslint/js";
+
+export default [js.configs.recommended];

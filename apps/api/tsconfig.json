@@ -3,10 +3,16 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
+
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+
     "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts"]
 }

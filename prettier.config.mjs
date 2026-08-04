@@ -1,2 +1,5 @@
-import config from "./packages/config/src/prettier.config.mjs";
-export default config;
+export default {
+  semi: true,
+  singleQuote: false,
+  trailingComma: "all",
+};
