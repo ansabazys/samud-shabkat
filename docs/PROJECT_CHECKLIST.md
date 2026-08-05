@@ -30,33 +30,33 @@
 
 ## Repository
 
-- [ ] Create GitHub Repository
-- [ ] Setup Monorepo
-- [ ] Configure pnpm Workspace
-- [ ] Configure Turborepo
-- [ ] Setup TypeScript
-- [ ] Setup ESLint
-- [ ] Setup Prettier
-- [ ] Configure Husky
-- [ ] Configure Commitlint
-- [ ] Create Project Documentation
+- [x] Create GitHub Repository
+- [x] Setup Monorepo
+- [x] Configure pnpm Workspace
+- [x] Configure Turborepo
+- [x] Setup TypeScript
+- [x] Setup ESLint
+- [x] Setup Prettier
+- [x] Configure Husky
+- [x] Configure Commitlint
+- [x] Create Project Documentation
 
 ---
 
 ## Shared Packages
 
-- [ ] packages/database
-- [ ] packages/types
-- [ ] packages/config
-- [ ] packages/validation
-- [ ] packages/ui
+- [x] packages/database
+- [x] packages/types
+- [x] packages/config
+- [x] packages/validation
+- [x] packages/ui
 
 ---
 
 ## Applications
 
-- [ ] Next.js Frontend
-- [ ] Fastify Backend
+- [x] Next.js Frontend
+- [x] Fastify Backend
 
 ---
 
