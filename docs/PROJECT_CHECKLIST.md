@@ -64,58 +64,58 @@
 
 ## PostgreSQL
 
-- [ ] Install PostgreSQL
-- [ ] Configure Drizzle ORM
-- [ ] Configure Migrations
-- [ ] Configure Seeders
+- [x] Install PostgreSQL
+- [x] Configure Drizzle ORM
+- [x] Configure Migrations
+- [x] Configure Seeders
 
 ---
 
 ## Authentication Tables
 
-- [ ] users
-- [ ] roles
-- [ ] permissions
-- [ ] role_permissions
-- [ ] user_roles
+- [x] users
+- [x] roles
+- [x] permissions
+- [x] role_permissions
+- [x] user_roles
 
 ---
 
 ## Catalog Tables
 
-- [ ] categories
-- [ ] brands
-- [ ] products
-- [ ] product_images
+- [x] categories
+- [x] brands
+- [x] products
+- [x] product_images
 
 ---
 
 ## Customer Tables
 
-- [ ] customer_profiles
+- [x] customer_profiles
 
 ---
 
 ## Order Tables
 
-- [ ] orders
-- [ ] order_items
+- [x] orders
+- [x] order_items
 
 ---
 
 ## Configuration
 
-- [ ] settings
+- [x] settings
 
 ---
 
 ## Database
 
-- [ ] Relationships
-- [ ] Indexes
-- [ ] JSONB Specifications
-- [ ] Soft Deletes
-- [ ] Seed Data
+- [x] Relationships
+- [x] Indexes
+- [x] JSONB Specifications
+- [x] Soft Deletes
+- [x] Seed Data
 
 ---
 

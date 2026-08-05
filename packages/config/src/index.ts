@@ -24,6 +24,7 @@ export const PERMISSIONS = {
   CUSTOMERS_UPDATE: "customers.update",
   ORDERS_VIEW: "orders.view",
   ORDERS_UPDATE: "orders.update",
+  ORDERS_PAYMENT: "orders.payment",
   ADMINS_VIEW: "admins.view",
   ADMINS_CREATE: "admins.create",
   ADMINS_UPDATE: "admins.update",

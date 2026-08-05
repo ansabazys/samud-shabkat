@@ -10,6 +10,15 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@samud/*": ["packages/*/src/index.ts"],
+      "@samud/database/*": ["packages/database/src/*"],
+      "@samud/ui/*": ["packages/ui/src/*"],
+      "@samud/config/*": ["packages/config/src/*"],
+      "@samud/types/*": ["packages/types/src/*"],
+      "@samud/validation/*": ["packages/validation/src/*"]
+    }
   }
 }

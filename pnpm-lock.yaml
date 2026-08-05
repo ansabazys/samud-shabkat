@@ -159,6 +159,9 @@ importers:
 
   packages/database:
     dependencies:
+      "@samud/config":
+        specifier: workspace:*
+        version: link:../config
       drizzle-orm:
         specifier: ^0.43.1
         version: 0.43.1(postgres@3.4.9)
