@@ -121,13 +121,13 @@
 
 # 3. Authentication
 
-- [ ] Register
-- [ ] Login
-- [ ] Logout
-- [ ] Refresh Token
-- [ ] JWT
-- [ ] Argon2 Password Hashing
-- [ ] Authentication Middleware
+- [x] Register
+- [x] Login
+- [x] Logout
+- [x] Refresh Token
+- [x] JWT
+- [x] Argon2 Password Hashing
+- [x] Authentication Middleware
 
 ---
 
