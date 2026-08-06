@@ -12,8 +12,12 @@ import {
   Box,
   Tag,
   Phone,
+  User,
+  LayoutDashboard,
+  LogOut,
 } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
+import { useAuthStore } from "@/store/auth-store";
 
 const emptySubscribe = () => () => {};
 
@@ -30,6 +34,8 @@ export function Header() {
   const router = useRouter();
   const totalItems = useCartStore((state) => state.getTotalItems());
   const setDrawerOpen = useCartStore((state) => state.setDrawerOpen);
+
+  const { isAuthenticated, isAdmin, logout } = useAuthStore();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +128,34 @@ export function Header() {
                 My Orders
               </Link>
             </nav>
+
+            {/* Auth / Admin Backoffice Link */}
+            {mounted && isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="px-3.5 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-500 text-cyan-300 hover:text-white border border-cyan-500/30 font-semibold text-xs transition flex items-center gap-1.5"
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5" /> Backoffice
+                  </Link>
+                )}
+                <button
+                  onClick={logout}
+                  className="p-2 text-slate-400 hover:text-rose-400 transition"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-xs transition flex items-center gap-1.5"
+              >
+                <User className="w-3.5 h-3.5 text-cyan-400" /> Sign In
+              </Link>
+            )}
 
             {/* Cart Button */}
             <button
