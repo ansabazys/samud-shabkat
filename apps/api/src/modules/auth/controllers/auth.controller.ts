@@ -1,6 +1,11 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { AuthService } from "./auth.service.js";
-import { registerSchema, loginSchema, refreshSchema } from "./auth.schema.js";
+import { AuthService } from "../services/auth.service.js";
+import {
+  registerSchema,
+  loginSchema,
+  refreshSchema,
+} from "../schemas/auth.schema.js";
+import { AUTH_CONSTANTS } from "../constants/auth.constants.js";
 
 export class AuthController {
   private authService: AuthService;
@@ -35,12 +40,12 @@ export class AuthController {
 
     const result = await this.authService.login(validation.data);
 
-    reply.setCookie("refreshToken", result.refreshToken, {
-      path: "/api/v1/auth",
+    reply.setCookie(AUTH_CONSTANTS.COOKIE_NAME, result.refreshToken, {
+      path: AUTH_CONSTANTS.COOKIE_PATH,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      maxAge: AUTH_CONSTANTS.COOKIE_MAX_AGE,
     });
 
     return reply.status(200).send(result);
@@ -49,7 +54,7 @@ export class AuthController {
   async refresh(request: FastifyRequest, reply: FastifyReply) {
     const token =
       (request.body as { refreshToken?: string })?.refreshToken ??
-      request.cookies.refreshToken;
+      request.cookies[AUTH_CONSTANTS.COOKIE_NAME];
 
     const validation = refreshSchema.safeParse({ refreshToken: token });
     if (!validation.success) {
@@ -60,12 +65,12 @@ export class AuthController {
 
     const result = await this.authService.refresh(validation.data.refreshToken);
 
-    reply.setCookie("refreshToken", result.refreshToken, {
-      path: "/api/v1/auth",
+    reply.setCookie(AUTH_CONSTANTS.COOKIE_NAME, result.refreshToken, {
+      path: AUTH_CONSTANTS.COOKIE_PATH,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 30 * 24 * 60 * 60,
+      maxAge: AUTH_CONSTANTS.COOKIE_MAX_AGE,
     });
 
     return reply.status(200).send(result);
@@ -75,7 +80,9 @@ export class AuthController {
     const userId = request.user.id;
     const result = await this.authService.logout(userId);
 
-    reply.clearCookie("refreshToken", { path: "/api/v1/auth" });
+    reply.clearCookie(AUTH_CONSTANTS.COOKIE_NAME, {
+      path: AUTH_CONSTANTS.COOKIE_PATH,
+    });
     return reply.status(200).send(result);
   }
 }

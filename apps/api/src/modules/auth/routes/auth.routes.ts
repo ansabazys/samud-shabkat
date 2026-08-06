@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { AuthController } from "./auth.controller.js";
-import { authenticate } from "../../middleware/auth.middleware.js";
+import { AuthController } from "../controllers/auth.controller.js";
+import { authenticate } from "../middleware/auth.middleware.js";
 
 export async function authRoutes(app: FastifyInstance) {
   const controller = new AuthController(app);

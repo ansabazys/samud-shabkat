@@ -1,38 +1,21 @@
-import { authRepository } from "./auth.repository.js";
+import { authRepository } from "../repositories/auth.repository.js";
 import { passwordService } from "./password.service.js";
 import { tokenService } from "./token.service.js";
 import { JwtService } from "./jwt.service.js";
+import { formatUserResponse } from "../utils/auth.utils.js";
+import { AUTH_CONSTANTS } from "../constants/auth.constants.js";
 import type { FastifyInstance } from "fastify";
 import type {
   RegisterInput,
   LoginInput,
   AuthResponse,
-  UserResponse,
-} from "./auth.types.js";
+} from "../types/auth.types.js";
 
 export class AuthService {
   private jwtService: JwtService;
 
   constructor(app: FastifyInstance) {
     this.jwtService = new JwtService(app);
-  }
-
-  private formatUserResponse(user: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-    companyName?: string | null;
-  }): UserResponse {
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      companyName: user.companyName ?? null,
-    };
   }
 
   async register(input: RegisterInput): Promise<{ message: string }> {
@@ -71,7 +54,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       role: user.role,
-      permissionsVersion: 1,
+      permissionsVersion: AUTH_CONSTANTS.DEFAULT_PERMISSIONS_VERSION,
     });
 
     const refreshToken = tokenService.generateRefreshToken();
@@ -80,7 +63,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: this.formatUserResponse(user),
+      user: formatUserResponse(user),
     };
   }
 
@@ -98,7 +81,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       role: user.role,
-      permissionsVersion: 1,
+      permissionsVersion: AUTH_CONSTANTS.DEFAULT_PERMISSIONS_VERSION,
     });
 
     // Refresh token rotation

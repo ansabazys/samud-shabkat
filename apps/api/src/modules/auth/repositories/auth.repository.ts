@@ -1,32 +1,14 @@
-import { db, users, roles, userRoles, customerProfiles } from "@samud/database";
+import { users, roles, userRoles, customerProfiles } from "@samud/database";
 import { ROLES } from "@samud/config";
 import { eq } from "drizzle-orm";
-import type { RegisterInput } from "./auth.types.js";
-
-function getDb() {
-  if (!db) {
-    throw new Error("Database client not initialized (DATABASE_URL missing)");
-  }
-  return db;
-}
-
-export interface EnrichedUser {
-  id: string;
-  email: string;
-  passwordHash: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  refreshToken: string | null;
-  role: string;
-  companyName?: string | null;
-}
+import type { RegisterInput, EnrichedUser } from "../types/auth.types.js";
+import { getAuthDb } from "../utils/auth.utils.js";
 
 export class AuthRepository {
   private async getFullUser(
     user: typeof users.$inferSelect,
   ): Promise<EnrichedUser> {
-    const database = getDb();
+    const database = getAuthDb();
     const [userRoleRecord] = await database
       .select({
         roleName: roles.name,
@@ -58,7 +40,7 @@ export class AuthRepository {
   }
 
   async findByEmail(email: string): Promise<EnrichedUser | null> {
-    const [user] = await getDb()
+    const [user] = await getAuthDb()
       .select()
       .from(users)
       .where(eq(users.email, email.toLowerCase()))
@@ -71,7 +53,7 @@ export class AuthRepository {
   }
 
   async findById(id: string): Promise<EnrichedUser | null> {
-    const [user] = await getDb()
+    const [user] = await getAuthDb()
       .select()
       .from(users)
       .where(eq(users.id, id))
@@ -84,7 +66,7 @@ export class AuthRepository {
   }
 
   async findByRefreshToken(token: string): Promise<EnrichedUser | null> {
-    const [user] = await getDb()
+    const [user] = await getAuthDb()
       .select()
       .from(users)
       .where(eq(users.refreshToken, token))
@@ -100,7 +82,7 @@ export class AuthRepository {
     data: RegisterInput,
     passwordHash: string,
   ): Promise<EnrichedUser> {
-    const database = getDb();
+    const database = getAuthDb();
 
     return database.transaction(async (tx) => {
       // 1. Insert user

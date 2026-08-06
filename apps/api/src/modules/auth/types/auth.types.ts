@@ -35,3 +35,15 @@ export interface AuthResponse {
   refreshToken: string;
   user: UserResponse;
 }
+
+export interface EnrichedUser {
+  id: string;
+  email: string;
+  passwordHash: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+  refreshToken: string | null;
+  role: string;
+  companyName?: string | null;
+}

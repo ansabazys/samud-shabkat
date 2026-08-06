@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { authRoutes } from "../modules/auth/auth.routes.js";
+import { authRoutes } from "../modules/auth/index.js";
 
 export async function registerRoutes(app: FastifyInstance) {
   app.get("/health", async () => ({ status: "ok" }));

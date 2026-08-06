@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import type { AuthenticatedUser } from "../../types/fastify.js";
+import type { AuthenticatedUser } from "../../../types/fastify.js";
+import { AUTH_CONSTANTS } from "../constants/auth.constants.js";
 
 export class JwtService {
   private app: FastifyInstance;
@@ -9,10 +10,12 @@ export class JwtService {
   }
 
   /**
-   * Generate a JWT Access Token with 15-minute expiration as specified in architecture.
+   * Generate a JWT Access Token utilizing configured domain lifetime.
    */
   generateAccessToken(user: AuthenticatedUser): string {
-    return this.app.jwt.sign(user, { expiresIn: "15m" });
+    return this.app.jwt.sign(user, {
+      expiresIn: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRES_IN,
+    });
   }
 
   /**
