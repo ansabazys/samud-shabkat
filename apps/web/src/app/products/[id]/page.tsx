@@ -10,6 +10,8 @@ import {
   ArrowLeft,
   Layers,
   Phone,
+  Warehouse,
+  AlertTriangle,
 } from "lucide-react";
 import type { Product } from "@/lib/api";
 
@@ -41,6 +43,10 @@ const sampleProductsMap: Record<string, Product> = {
       slug: "switches-routers",
     },
     brand: { id: "brand-cisco", name: "Cisco", slug: "cisco" },
+    availableStock: 45,
+    stockStatus: "IN_STOCK",
+    warehouseName: "Main Dubai Warehouse",
+    warehouseCode: "DXB-MAIN",
     images: [
       {
         id: "img-1",
@@ -59,6 +65,12 @@ export default function ProductDetailPage({
   const resolvedParams = use(params);
   const productId = resolvedParams.id;
   const product = sampleProductsMap[productId] || sampleProductsMap["prod-1"];
+
+  const availableStock = product.availableStock ?? 45;
+  const warehouseName =
+    product.warehouseName || "Main Dubai Warehouse (DXB-MAIN)";
+  const isOutOfStock = availableStock <= 0;
+  const isLowStock = availableStock > 0 && availableStock <= 10;
 
   const [quantity, setQuantity] = useState(1);
   const addItem = useCartStore((state) => state.addItem);
@@ -89,8 +101,8 @@ export default function ProductDetailPage({
             alt={product.name}
             className="w-full h-full object-cover rounded-2xl"
           />
-          <div className="absolute top-4 left-4 bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            In Stock (Dubai Warehouse)
+          <div className="absolute top-4 left-4 bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md">
+            <Warehouse className="w-3.5 h-3.5 text-cyan-400" /> {warehouseName}
           </div>
         </div>
 
@@ -107,6 +119,20 @@ export default function ProductDetailPage({
             </h1>
           </div>
 
+          {/* Low Stock Alert */}
+          {isLowStock && (
+            <div className="p-4 rounded-2xl bg-amber-950/70 border border-amber-500/40 text-amber-200 text-xs flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+              <div>
+                <span className="font-bold block">Low Stock Alert</span>
+                <span>
+                  Only {availableStock} units remaining in warehouse. Order soon
+                  to reserve hardware.
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
             <div>
               <span className="text-xs text-slate-400 uppercase tracking-wider block font-semibold">
@@ -116,9 +142,16 @@ export default function ProductDetailPage({
                 AED {Number(product.price).toLocaleString()}
               </span>
             </div>
-            <span className="text-xs text-emerald-400 font-semibold bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 rounded-xl">
-              Tax Invoice Eligible
-            </span>
+            <div className="text-right">
+              <span className="text-xs text-slate-400 uppercase tracking-wider block font-semibold">
+                Available Stock
+              </span>
+              <span
+                className={`text-lg font-bold ${availableStock > 0 ? "text-emerald-400" : "text-rose-400"}`}
+              >
+                {availableStock} Units Available
+              </span>
+            </div>
           </div>
 
           <p className="text-sm text-slate-300 leading-relaxed">
@@ -127,9 +160,9 @@ export default function ProductDetailPage({
 
           {/* Quantity Picker & Add to Cart */}
           <div className="space-y-4 pt-4 border-t border-slate-800">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Quantity:
+                Quantity Required:
               </span>
               <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl p-1">
                 <button
@@ -142,8 +175,11 @@ export default function ProductDetailPage({
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-3 py-1 text-slate-300 hover:text-white font-bold text-sm"
+                  onClick={() =>
+                    setQuantity(Math.min(availableStock, quantity + 1))
+                  }
+                  disabled={quantity >= availableStock}
+                  className="px-3 py-1 text-slate-300 hover:text-white font-bold text-sm disabled:opacity-30"
                 >
                   +
                 </button>
@@ -153,9 +189,15 @@ export default function ProductDetailPage({
             <div className="flex gap-4">
               <button
                 onClick={() => addItem(product, quantity)}
-                className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-cyan-500/20 transition flex items-center justify-center gap-2"
+                disabled={isOutOfStock}
+                className={`flex-1 py-4 px-6 rounded-2xl font-bold text-sm shadow-xl transition flex items-center justify-center gap-2 ${
+                  isOutOfStock
+                    ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                    : "bg-gradient-to-r from-cyan-500 via-sky-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white shadow-cyan-500/20"
+                }`}
               >
-                <ShoppingBag className="w-5 h-5" /> Add to Order Cart
+                <ShoppingBag className="w-5 h-5" />{" "}
+                {isOutOfStock ? "Out of Stock" : "Add to Order Cart"}
               </button>
               <a
                 href={`https://wa.me/97141234567?text=Quotation%20Request%20for%20${encodeURIComponent(product.sku)}`}

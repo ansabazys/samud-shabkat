@@ -85,7 +85,6 @@ export class OrderRepository {
       .limit(limit)
       .offset(offset);
 
-    // Fetch order items for retrieved orders
     const orderIds = rawOrders.map((o) => o.order.id);
     let itemsMap: Record<string, (typeof orderItems.$inferSelect)[]> = {};
 
@@ -156,57 +155,63 @@ export class OrderRepository {
     };
   }
 
-  async create(userId: string, data: CreateOrderInput) {
-    const database = getDb();
+  async createWithTransaction(
+    tx: unknown,
+    userId: string,
+    data: CreateOrderInput,
+  ) {
+    const database = (tx as ReturnType<typeof getDb>) || getDb();
     const orderNumber = this.generateOrderNumber();
 
-    // Calculate total price from items
     const totalAmount = data.items
       .reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
       .toFixed(2);
 
-    return database.transaction(async (tx) => {
-      const [newOrder] = await tx
-        .insert(orders)
-        .values({
-          orderNumber,
-          userId,
-          orderStatus: "PENDING",
-          paymentStatus: "PENDING",
-          totalAmount,
-          companyName: data.companyName ?? null,
-          contactPhone: data.contactPhone,
-          billingAddress: data.billingAddress,
-          shippingAddress: data.shippingAddress,
-          notes: data.notes ?? null,
-        })
-        .returning();
+    const [newOrder] = await database
+      .insert(orders)
+      .values({
+        orderNumber,
+        userId,
+        orderStatus: "PENDING",
+        paymentStatus: "PENDING",
+        totalAmount,
+        companyName: data.companyName ?? null,
+        contactPhone: data.contactPhone,
+        billingAddress: data.billingAddress,
+        shippingAddress: data.shippingAddress,
+        notes: data.notes ?? null,
+      })
+      .returning();
 
-      const itemsToInsert = data.items.map((item) => ({
-        orderId: newOrder.id,
-        productId: item.productId ?? null,
-        productName: item.productName,
-        sku: item.sku,
-        unitPrice: item.unitPrice.toFixed(2),
-        quantity: item.quantity,
-        totalPrice: (item.unitPrice * item.quantity).toFixed(2),
-        specifications: item.specifications ?? {},
-      }));
+    const itemsToInsert = data.items.map((item) => ({
+      orderId: newOrder.id,
+      productId: item.productId ?? null,
+      productName: item.productName,
+      sku: item.sku,
+      unitPrice: item.unitPrice.toFixed(2),
+      quantity: item.quantity,
+      totalPrice: (item.unitPrice * item.quantity).toFixed(2),
+      specifications: item.specifications ?? {},
+    }));
 
-      const insertedItems = await tx
-        .insert(orderItems)
-        .values(itemsToInsert)
-        .returning();
+    const insertedItems = await database
+      .insert(orderItems)
+      .values(itemsToInsert)
+      .returning();
 
-      return {
-        ...newOrder,
-        items: insertedItems,
-      };
-    });
+    return {
+      ...newOrder,
+      items: insertedItems,
+    };
   }
 
-  async updateOrderStatus(id: string, data: UpdateOrderStatusInput) {
-    const [updated] = await getDb()
+  async updateOrderStatusWithTx(
+    tx: unknown,
+    id: string,
+    data: UpdateOrderStatusInput,
+  ) {
+    const database = (tx as ReturnType<typeof getDb>) || getDb();
+    const [updated] = await database
       .update(orders)
       .set({
         orderStatus: data.orderStatus,

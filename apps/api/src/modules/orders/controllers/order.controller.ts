@@ -69,7 +69,9 @@ export class OrderController {
     reply: FastifyReply,
   ) {
     try {
+      const userId = request.user?.id || "";
       const updated = await orderService.updateOrderStatus(
+        userId,
         request.params.id,
         request.body,
       );

@@ -59,6 +59,13 @@ export interface Product {
   category?: Category;
   brand?: Brand;
   images?: ProductImage[];
+  currentStock?: number;
+  reservedStock?: number;
+  availableStock?: number;
+  stockStatus?:
+    "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" | "PRE_ORDER" | "DISCONTINUED";
+  warehouseName?: string;
+  warehouseCode?: string;
 }
 
 export interface PaginatedResponse<T> {

@@ -1,4 +1,8 @@
 import { orderRepository } from "../repositories/order.repository.js";
+import { inventoryService } from "../../inventory/services/inventory.service.js";
+import { inventoryRepository } from "../../inventory/repositories/inventory.repository.js";
+import { cartRepository } from "../../cart/repositories/cart.repository.js";
+import { getDb } from "../../../common/db.js";
 import type {
   CreateOrderInput,
   OrderQueryParams,
@@ -24,15 +28,106 @@ export class OrderService {
   }
 
   async createOrder(userId: string, data: CreateOrderInput) {
-    return orderRepository.create(userId, data);
+    const defaultWh = await inventoryRepository.getDefaultWarehouse();
+
+    // 1. Stock Validation for every item before starting transaction
+    for (const item of data.items) {
+      if (item.productId) {
+        const validation = await inventoryService.validateRequestedQuantity(
+          item.productId,
+          item.quantity,
+          defaultWh.id,
+        );
+
+        if (!validation.valid) {
+          throw new Error(validation.message);
+        }
+      }
+    }
+
+    // 2. Perform order creation, stock reservation, and cart clearance in database transaction
+    const database = getDb();
+    const createdOrder = await database.transaction(async (tx) => {
+      const order = await orderRepository.createWithTransaction(
+        tx,
+        userId,
+        data,
+      );
+
+      for (const item of data.items) {
+        if (item.productId) {
+          await inventoryRepository.reserveStock(
+            tx,
+            item.productId,
+            defaultWh.id,
+            order.id,
+            item.quantity,
+            userId,
+          );
+        }
+      }
+
+      // Clear user active cart
+      const cart = await cartRepository.findOrCreateActiveCart(userId);
+      await cartRepository.clearCart(cart.id);
+
+      return order;
+    });
+
+    return createdOrder;
   }
 
-  async updateOrderStatus(id: string, data: UpdateOrderStatusInput) {
+  async updateOrderStatus(
+    userId: string,
+    id: string,
+    data: UpdateOrderStatusInput,
+  ) {
     const existing = await orderRepository.findById(id);
     if (!existing) {
       throw new Error("Order not found");
     }
-    return orderRepository.updateOrderStatus(id, data);
+
+    const defaultWh = await inventoryRepository.getDefaultWarehouse();
+    const database = getDb();
+
+    return database.transaction(async (tx) => {
+      const updated = await orderRepository.updateOrderStatusWithTx(
+        tx,
+        id,
+        data,
+      );
+
+      // Handle stock reservation lifecycle on status transitions
+      if (data.orderStatus === "CONFIRMED" || data.orderStatus === "SHIPPED") {
+        for (const item of existing.items) {
+          if (item.productId) {
+            await inventoryRepository.fulfillStock(
+              tx,
+              item.productId,
+              defaultWh.id,
+              existing.id,
+              item.quantity,
+              userId,
+            );
+          }
+        }
+      } else if (data.orderStatus === "CANCELLED") {
+        for (const item of existing.items) {
+          if (item.productId) {
+            await inventoryRepository.releaseStock(
+              tx,
+              item.productId,
+              defaultWh.id,
+              existing.id,
+              item.quantity,
+              userId,
+            );
+          }
+        }
+      }
+
+      return updated;
+    });
   }
 
   async updatePaymentStatus(id: string, data: UpdatePaymentStatusInput) {

@@ -6,6 +6,8 @@ import { productRoutes } from "../modules/products/index.js";
 import { orderRoutes } from "../modules/orders/index.js";
 import { dashboardRoutes } from "../modules/dashboard/index.js";
 import { settingsRoutes } from "../modules/settings/index.js";
+import { cartRoutes } from "../modules/cart/index.js";
+import { inventoryRoutes } from "../modules/inventory/index.js";
 
 export async function registerRoutes(app: FastifyInstance) {
   app.get("/health", async () => ({ status: "ok" }));
@@ -17,4 +19,6 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(orderRoutes, { prefix: "/api/v1/orders" });
   await app.register(dashboardRoutes, { prefix: "/api/v1/dashboard" });
   await app.register(settingsRoutes, { prefix: "/api/v1/settings" });
+  await app.register(cartRoutes, { prefix: "/api/v1/cart" });
+  await app.register(inventoryRoutes, { prefix: "/api/v1/inventory" });
 }
