@@ -5,10 +5,14 @@
     "outDir": "dist",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+
     "baseUrl": ".",
+
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+
+    "ignoreDeprecations": "5.0"
   },
   "include": ["src/**/*.ts"]
 }
