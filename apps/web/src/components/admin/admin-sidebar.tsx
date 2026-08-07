@@ -9,6 +9,7 @@ import {
   Package,
   Layers,
   Tag,
+  Users,
   Settings,
   LogOut,
   Box,
@@ -19,6 +20,7 @@ import { useAuthStore } from "@/store/auth-store";
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
+  { name: "Users & Staff", href: "/admin/users", icon: Users },
   { name: "Stock & Inventory", href: "/admin/inventory", icon: Boxes },
   { name: "Products", href: "/admin/products", icon: Package },
   { name: "Categories", href: "/admin/categories", icon: Layers },
