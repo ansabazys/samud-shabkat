@@ -94,6 +94,50 @@ export class InventoryService {
   async getAllWarehouses() {
     return inventoryRepository.getAllWarehouses();
   }
+
+  async adjustStock(
+    input: {
+      productId: string;
+      warehouseId?: string;
+      adjustmentType: "ADD" | "SUBTRACT" | "SET";
+      quantity: number;
+      reference?: string;
+      notes?: string;
+    },
+    userId?: string,
+  ) {
+    const targetWh = input.warehouseId
+      ? { id: input.warehouseId }
+      : await inventoryRepository.getDefaultWarehouse();
+
+    return inventoryRepository.adjustStock(
+      input.productId,
+      targetWh.id,
+      input.adjustmentType,
+      input.quantity,
+      input.reference,
+      input.notes,
+      userId,
+    );
+  }
+
+  async getLowStock(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    warehouseId?: string;
+  }) {
+    return inventoryRepository.findLowStock(params);
+  }
+
+  async getTransactions(params: {
+    page: number;
+    limit: number;
+    productId?: string;
+    warehouseId?: string;
+  }) {
+    return inventoryRepository.findTransactions(params);
+  }
 }
 
 export const inventoryService = new InventoryService();

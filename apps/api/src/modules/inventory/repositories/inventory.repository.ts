@@ -220,6 +220,168 @@ export class InventoryRepository {
       createdById: userId ?? null,
     });
   }
+
+  async adjustStock(
+    productId: string,
+    warehouseId: string,
+    adjustmentType: "ADD" | "SUBTRACT" | "SET",
+    quantity: number,
+    reference?: string,
+    notes?: string,
+    userId?: string,
+  ) {
+    const database = getDb();
+    const currentInv = await this.findByProductIdAndWarehouseId(
+      productId,
+      warehouseId,
+    );
+
+    let newCurrentStock = currentInv.currentStock;
+    let quantityDelta = 0;
+
+    if (adjustmentType === "ADD") {
+      quantityDelta = quantity;
+      newCurrentStock = currentInv.currentStock + quantity;
+    } else if (adjustmentType === "SUBTRACT") {
+      quantityDelta = -quantity;
+      newCurrentStock = Math.max(0, currentInv.currentStock - quantity);
+    } else if (adjustmentType === "SET") {
+      quantityDelta = quantity - currentInv.currentStock;
+      newCurrentStock = Math.max(0, quantity);
+    }
+
+    await database
+      .update(productInventory)
+      .set({
+        currentStock: newCurrentStock,
+        updatedAt: sql`NOW()`,
+      })
+      .where(eq(productInventory.id, currentInv.id));
+
+    const [txRow] = await database
+      .insert(inventoryTransactions)
+      .values({
+        productId,
+        warehouseId,
+        transactionType: "ADJUSTMENT",
+        quantityDelta,
+        reservedDelta: 0,
+        stockAfter: newCurrentStock,
+        reservedAfter: currentInv.reservedStock,
+        reference: reference ?? `Stock Adjustment (${adjustmentType})`,
+        notes: notes ?? null,
+        createdById: userId ?? null,
+      })
+      .returning();
+
+    return {
+      inventoryId: currentInv.id,
+      productId,
+      warehouseId,
+      previousStock: currentInv.currentStock,
+      currentStock: newCurrentStock,
+      reservedStock: currentInv.reservedStock,
+      availableStock: newCurrentStock - currentInv.reservedStock,
+      transaction: txRow,
+    };
+  }
+
+  async findLowStock(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    warehouseId?: string;
+  }) {
+    const database = getDb();
+    const { page, limit, warehouseId } = params;
+    const offset = (page - 1) * limit;
+
+    const conditions = [
+      sql`${productInventory.currentStock} <= ${productInventory.reorderLevel}`,
+    ];
+
+    if (warehouseId) {
+      conditions.push(eq(productInventory.warehouseId, warehouseId));
+    }
+
+    const whereClause = and(...conditions);
+
+    const [countResult] = await database
+      .select({ total: sql<number>`count(*)` })
+      .from(productInventory)
+      .where(whereClause);
+
+    const total = Number(countResult?.total ?? 0);
+
+    const rows = await database
+      .select({
+        inventory: productInventory,
+        warehouseName: warehouses.name,
+        warehouseCode: warehouses.code,
+      })
+      .from(productInventory)
+      .innerJoin(warehouses, eq(productInventory.warehouseId, warehouses.id))
+      .where(whereClause)
+      .limit(limit)
+      .offset(offset);
+
+    const data = rows.map((r) => ({
+      ...r.inventory,
+      warehouseName: r.warehouseName,
+      warehouseCode: r.warehouseCode,
+      availableStock: r.inventory.currentStock - r.inventory.reservedStock,
+    }));
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async findTransactions(params: {
+    page: number;
+    limit: number;
+    productId?: string;
+    warehouseId?: string;
+  }) {
+    const database = getDb();
+    const { page, limit, productId, warehouseId } = params;
+    const offset = (page - 1) * limit;
+
+    const conditions = [];
+    if (productId)
+      conditions.push(eq(inventoryTransactions.productId, productId));
+    if (warehouseId)
+      conditions.push(eq(inventoryTransactions.warehouseId, warehouseId));
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [countResult] = await database
+      .select({ total: sql<number>`count(*)` })
+      .from(inventoryTransactions)
+      .where(whereClause);
+
+    const total = Number(countResult?.total ?? 0);
+
+    const data = await database
+      .select()
+      .from(inventoryTransactions)
+      .where(whereClause)
+      .orderBy(sql`${inventoryTransactions.createdAt} DESC`)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }
 
 export const inventoryRepository = new InventoryRepository();
