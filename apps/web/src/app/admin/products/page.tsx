@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Search, Plus, Edit2 } from "lucide-react";
+import { ImageUploader, type ImageItem } from "@/components/ui/image-uploader";
 
 interface ProductRow {
   id: string;
@@ -11,6 +12,7 @@ interface ProductRow {
   brandName: string;
   price: string;
   isActive: boolean;
+  images?: ImageItem[];
 }
 
 const mockProducts: ProductRow[] = [
@@ -47,6 +49,7 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [productsList, setProductsList] = useState<ProductRow[]>(mockProducts);
   const [isAdding, setIsAdding] = useState(false);
+  const [productImages, setProductImages] = useState<ImageItem[]>([]);
   const [newProduct, setNewProduct] = useState({
     sku: "",
     name: "",
@@ -80,10 +83,12 @@ export default function AdminProductsPage() {
         brandName: newProduct.brandName,
         price: Number(newProduct.price).toLocaleString() + ".00",
         isActive: true,
+        images: productImages,
       },
     ]);
 
     setIsAdding(false);
+    setProductImages([]);
     setNewProduct({
       sku: "",
       name: "",
@@ -182,26 +187,43 @@ export default function AdminProductsPage() {
 
       {/* Add Modal */}
       {isAdding && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl my-8">
             <h3 className="text-base font-bold text-white pb-3 border-b border-slate-800">
               Add New Hardware Product
             </h3>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">
-                  SKU
-                </label>
-                <input
-                  type="text"
-                  placeholder="C9300-48P-A"
-                  value={newProduct.sku}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, sku: e.target.value })
-                  }
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
-                />
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-300 font-semibold block mb-1">
+                    SKU
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="C9300-48P-A"
+                    value={newProduct.sku}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, sku: e.target.value })
+                    }
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-300 font-semibold block mb-1">
+                    Wholesale Price (AED)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="14500"
+                    value={newProduct.price}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, price: e.target.value })
+                    }
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                  />
+                </div>
               </div>
 
               <div>
@@ -219,23 +241,20 @@ export default function AdminProductsPage() {
                 />
               </div>
 
+              {/* Drag and Drop Image Uploader */}
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">
-                  Wholesale Price (AED)
+                <label className="text-slate-300 font-semibold block mb-1.5">
+                  Product Images & Media (Cloudflare R2)
                 </label>
-                <input
-                  type="number"
-                  placeholder="14500"
-                  value={newProduct.price}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, price: e.target.value })
-                  }
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                <ImageUploader
+                  images={productImages}
+                  onChange={setProductImages}
+                  folder="products"
                 />
               </div>
             </div>
 
-            <div className="flex gap-3 pt-3">
+            <div className="flex gap-3 pt-3 border-t border-slate-800">
               <button
                 onClick={() => setIsAdding(false)}
                 className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition"

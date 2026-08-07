@@ -12,8 +12,24 @@ export const orderItemSchema = z.object({
 export const createOrderSchema = z.object({
   companyName: z.string().max(255).optional(),
   contactPhone: z.string().min(5, "Contact phone is required").max(30),
-  billingAddress: z.string().min(5, "Billing address is required"),
-  shippingAddress: z.string().min(5, "Shipping address is required"),
+  billingAddress: z
+    .string()
+    .min(1, "Billing address is required")
+    .optional()
+    .default("Store Address"),
+  shippingAddress: z
+    .string()
+    .min(1, "Shipping address is required")
+    .optional()
+    .default("Store Pickup"),
+  fulfillmentType: z
+    .enum(["STORE_PICKUP", "HOME_DELIVERY"])
+    .optional()
+    .default("HOME_DELIVERY"),
+  paymentMethod: z
+    .enum(["CASH_ON_DELIVERY", "CASH_ON_PICKUP", "CASH"])
+    .optional()
+    .default("CASH_ON_DELIVERY"),
   notes: z.string().optional(),
   items: z
     .array(orderItemSchema)
@@ -23,10 +39,13 @@ export const createOrderSchema = z.object({
 export const updateOrderStatusSchema = z.object({
   orderStatus: z.enum([
     "PENDING",
-    "PROCESSING",
     "CONFIRMED",
-    "SHIPPED",
+    "PROCESSING",
+    "READY_FOR_COLLECTION",
+    "READY_FOR_PICKUP",
+    "OUT_FOR_DELIVERY",
     "DELIVERED",
+    "COMPLETED",
     "CANCELLED",
   ]),
 });
@@ -35,12 +54,21 @@ export const updatePaymentStatusSchema = z.object({
   paymentStatus: z.enum(["PENDING", "PAID", "FAILED", "REFUNDED"]),
 });
 
+export const collectCashSchema = z.object({
+  notes: z.string().optional(),
+  paymentMethod: z
+    .enum(["CASH_ON_DELIVERY", "CASH_ON_PICKUP", "CASH"])
+    .optional()
+    .default("CASH"),
+});
+
 export const orderQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional().default(1),
   limit: z.coerce.number().int().positive().max(100).optional().default(20),
   search: z.string().optional(),
   orderStatus: z.string().optional(),
   paymentStatus: z.string().optional(),
+  fulfillmentType: z.enum(["STORE_PICKUP", "HOME_DELIVERY"]).optional(),
   userId: z.string().uuid().optional(),
   sortBy: z
     .enum(["createdAt", "totalAmount", "orderNumber"])
@@ -58,4 +86,5 @@ export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
 export type UpdatePaymentStatusInput = z.infer<
   typeof updatePaymentStatusSchema
 >;
+export type CollectCashInput = z.infer<typeof collectCashSchema>;
 export type OrderQueryParams = z.infer<typeof orderQuerySchema>;

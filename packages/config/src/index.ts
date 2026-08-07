@@ -1,6 +1,8 @@
 export const ROLES = {
   SUPER_ADMIN: "SUPER_ADMIN",
   ADMIN: "ADMIN",
+  STAFF: "STAFF",
+  DELIVERY_BOY: "DELIVERY_BOY",
   CUSTOMER: "CUSTOMER",
 } as const;
 
@@ -37,8 +39,12 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 export const ORDER_STATUS = {
   PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
   PROCESSING: "PROCESSING",
   READY_FOR_COLLECTION: "READY_FOR_COLLECTION",
+  READY_FOR_PICKUP: "READY_FOR_PICKUP",
+  OUT_FOR_DELIVERY: "OUT_FOR_DELIVERY",
+  DELIVERED: "DELIVERED",
   COMPLETED: "COMPLETED",
   CANCELLED: "CANCELLED",
 } as const;
@@ -54,3 +60,20 @@ export const PAYMENT_STATUS = {
 
 export type PaymentStatus =
   (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
+
+export const FULFILLMENT_TYPE = {
+  STORE_PICKUP: "STORE_PICKUP",
+  HOME_DELIVERY: "HOME_DELIVERY",
+} as const;
+
+export type FulfillmentType =
+  (typeof FULFILLMENT_TYPE)[keyof typeof FULFILLMENT_TYPE];
+
+export const PAYMENT_METHOD = {
+  CASH_ON_DELIVERY: "CASH_ON_DELIVERY",
+  CASH_ON_PICKUP: "CASH_ON_PICKUP",
+  CASH: "CASH",
+} as const;
+
+export type PaymentMethod =
+  (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];

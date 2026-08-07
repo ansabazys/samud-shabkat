@@ -98,7 +98,16 @@ export class OrderService {
       );
 
       // Handle stock reservation lifecycle on status transitions
-      if (data.orderStatus === "CONFIRMED" || data.orderStatus === "SHIPPED") {
+      const fulfillStatuses = [
+        "CONFIRMED",
+        "SHIPPED",
+        "OUT_FOR_DELIVERY",
+        "READY_FOR_PICKUP",
+        "DELIVERED",
+        "COMPLETED",
+      ];
+
+      if (fulfillStatuses.includes(data.orderStatus)) {
         for (const item of existing.items) {
           if (item.productId) {
             await inventoryRepository.fulfillStock(
@@ -136,6 +145,14 @@ export class OrderService {
       throw new Error("Order not found");
     }
     return orderRepository.updatePaymentStatus(id, data);
+  }
+
+  async collectCash(id: string, paymentMethod?: string, notes?: string) {
+    const existing = await orderRepository.findById(id);
+    if (!existing) {
+      throw new Error("Order not found");
+    }
+    return orderRepository.collectCash(id, paymentMethod, notes);
   }
 }
 

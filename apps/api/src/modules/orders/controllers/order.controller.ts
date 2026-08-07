@@ -5,6 +5,7 @@ import type {
   OrderQueryParams,
   UpdateOrderStatusInput,
   UpdatePaymentStatusInput,
+  CollectCashInput,
 } from "../schemas/order.schema.js";
 
 export class OrderController {
@@ -101,6 +102,30 @@ export class OrderController {
       return reply.send({
         success: true,
         message: "Payment status updated",
+        data: updated,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An error occurred";
+      return reply.status(400).send({ success: false, message });
+    }
+  }
+
+  async collectCash(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: CollectCashInput;
+    }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const updated = await orderService.collectCash(
+        request.params.id,
+        request.body?.paymentMethod,
+        request.body?.notes,
+      );
+      return reply.send({
+        success: true,
+        message: "Cash payment recorded successfully",
         data: updated,
       });
     } catch (err: unknown) {

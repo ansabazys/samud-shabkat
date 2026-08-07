@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, CheckCircle2, Clock, Truck, XCircle } from "lucide-react";
+import {
+  Search,
+  CheckCircle2,
+  Clock,
+  Truck,
+  XCircle,
+  Package,
+} from "lucide-react";
 
 interface OrderRecord {
   id: string;

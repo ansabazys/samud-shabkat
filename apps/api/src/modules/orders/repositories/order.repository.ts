@@ -23,6 +23,7 @@ export class OrderRepository {
       search,
       orderStatus,
       paymentStatus,
+      fulfillmentType,
       userId,
       sortBy,
       sortOrder,
@@ -41,6 +42,10 @@ export class OrderRepository {
 
     if (paymentStatus) {
       conditions.push(eq(orders.paymentStatus, paymentStatus));
+    }
+
+    if (fulfillmentType) {
+      conditions.push(eq(orders.fulfillmentType, fulfillmentType));
     }
 
     if (search) {
@@ -174,11 +179,21 @@ export class OrderRepository {
         userId,
         orderStatus: "PENDING",
         paymentStatus: "PENDING",
+        fulfillmentType: data.fulfillmentType ?? "HOME_DELIVERY",
+        paymentMethod:
+          data.paymentMethod ??
+          (data.fulfillmentType === "STORE_PICKUP"
+            ? "CASH_ON_PICKUP"
+            : "CASH_ON_DELIVERY"),
         totalAmount,
         companyName: data.companyName ?? null,
         contactPhone: data.contactPhone,
-        billingAddress: data.billingAddress,
-        shippingAddress: data.shippingAddress,
+        billingAddress: data.billingAddress ?? "Store Address",
+        shippingAddress:
+          data.shippingAddress ??
+          (data.fulfillmentType === "STORE_PICKUP"
+            ? "Store Pickup"
+            : "Customer Address"),
         notes: data.notes ?? null,
       })
       .returning();
@@ -230,6 +245,27 @@ export class OrderRepository {
         paymentStatus: data.paymentStatus,
         updatedAt: sql`NOW()`,
       })
+      .where(eq(orders.id, id))
+      .returning();
+
+    return updated ?? null;
+  }
+
+  async collectCash(id: string, paymentMethod = "CASH", notes?: string) {
+    const database = getDb();
+    const updateData: Record<string, unknown> = {
+      paymentStatus: "PAID",
+      paymentMethod,
+      updatedAt: sql`NOW()`,
+    };
+
+    if (notes) {
+      updateData.notes = sql`COALESCE(${orders.notes}, '') || ${` [Cash Collected: ${notes}]`}`;
+    }
+
+    const [updated] = await database
+      .update(orders)
+      .set(updateData)
       .where(eq(orders.id, id))
       .returning();
 

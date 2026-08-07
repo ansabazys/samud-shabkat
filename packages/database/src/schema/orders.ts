@@ -26,6 +26,12 @@ export const orders = pgTable(
     paymentStatus: varchar("payment_status", { length: 50 })
       .default("PENDING")
       .notNull(),
+    fulfillmentType: varchar("fulfillment_type", { length: 50 })
+      .default("HOME_DELIVERY")
+      .notNull(),
+    paymentMethod: varchar("payment_method", { length: 50 })
+      .default("CASH_ON_DELIVERY")
+      .notNull(),
     totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
     companyName: varchar("company_name", { length: 255 }),
     contactPhone: varchar("contact_phone", { length: 30 }),
