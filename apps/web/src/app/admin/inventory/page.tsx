@@ -72,7 +72,15 @@ export default function AdminInventoryPage() {
   }, [searchQuery]);
 
   useEffect(() => {
-    fetchInventoryData();
+    let isMounted = true;
+    (async () => {
+      if (isMounted) {
+        await fetchInventoryData();
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
   }, [fetchInventoryData]);
 
   const handleAdjustSubmit = async (e: React.FormEvent) => {

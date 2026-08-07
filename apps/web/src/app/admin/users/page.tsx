@@ -55,7 +55,15 @@ export default function AdminUsersPage() {
   }, [searchQuery, selectedRole]);
 
   useEffect(() => {
-    fetchUsers();
+    let isMounted = true;
+    (async () => {
+      if (isMounted) {
+        await fetchUsers();
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
   }, [fetchUsers]);
 
   const handleDeactivate = async (id: string) => {

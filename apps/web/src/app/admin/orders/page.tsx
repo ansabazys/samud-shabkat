@@ -48,7 +48,15 @@ export default function AdminOrdersPage() {
   }, [searchQuery, selectedStatus]);
 
   useEffect(() => {
-    fetchOrders();
+    let isMounted = true;
+    (async () => {
+      if (isMounted) {
+        await fetchOrders();
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
   }, [fetchOrders]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
