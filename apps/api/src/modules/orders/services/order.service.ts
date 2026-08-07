@@ -2,6 +2,7 @@ import { orderRepository } from "../repositories/order.repository.js";
 import { inventoryService } from "../../inventory/services/inventory.service.js";
 import { inventoryRepository } from "../../inventory/repositories/inventory.repository.js";
 import { cartRepository } from "../../cart/repositories/cart.repository.js";
+import { notificationService } from "../../notifications/index.js";
 import { getDb } from "../../../common/db.js";
 import type {
   CreateOrderInput,
@@ -74,6 +75,17 @@ export class OrderService {
       return order;
     });
 
+    // Send order confirmation email asynchronously
+    orderRepository.findById(createdOrder.id).then((fullOrder) => {
+      if (fullOrder && fullOrder.user) {
+        notificationService
+          .notifyOrderPlaced(fullOrder, fullOrder.user)
+          .catch((err) =>
+            console.error("[OrderService] Order email error:", err),
+          );
+      }
+    });
+
     return createdOrder;
   }
 
@@ -90,12 +102,8 @@ export class OrderService {
     const defaultWh = await inventoryRepository.getDefaultWarehouse();
     const database = getDb();
 
-    return database.transaction(async (tx) => {
-      const updated = await orderRepository.updateOrderStatusWithTx(
-        tx,
-        id,
-        data,
-      );
+    const updated = await database.transaction(async (tx) => {
+      const res = await orderRepository.updateOrderStatusWithTx(tx, id, data);
 
       // Handle stock reservation lifecycle on status transitions
       const fulfillStatuses = [
@@ -135,8 +143,19 @@ export class OrderService {
         }
       }
 
-      return updated;
+      return res;
     });
+
+    // Send status change email notification
+    if (existing && existing.user) {
+      notificationService
+        .notifyOrderStatusChanged(existing, existing.user, data.orderStatus)
+        .catch((err) =>
+          console.error("[OrderService] Status email error:", err),
+        );
+    }
+
+    return updated;
   }
 
   async updatePaymentStatus(id: string, data: UpdatePaymentStatusInput) {
@@ -144,7 +163,13 @@ export class OrderService {
     if (!existing) {
       throw new Error("Order not found");
     }
-    return orderRepository.updatePaymentStatus(id, data);
+    const updated = await orderRepository.updatePaymentStatus(id, data);
+    if (data.paymentStatus === "PAID" && existing && existing.user) {
+      notificationService
+        .notifyCashCollected(existing, existing.user)
+        .catch((err) => console.error("[OrderService] Cash email error:", err));
+    }
+    return updated;
   }
 
   async collectCash(id: string, paymentMethod?: string, notes?: string) {
@@ -152,7 +177,13 @@ export class OrderService {
     if (!existing) {
       throw new Error("Order not found");
     }
-    return orderRepository.collectCash(id, paymentMethod, notes);
+    const updated = await orderRepository.collectCash(id, paymentMethod, notes);
+    if (existing && existing.user) {
+      notificationService
+        .notifyCashCollected(existing, existing.user)
+        .catch((err) => console.error("[OrderService] Cash email error:", err));
+    }
+    return updated;
   }
 }
 

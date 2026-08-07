@@ -4,6 +4,7 @@ import { tokenService } from "./token.service.js";
 import { JwtService } from "./jwt.service.js";
 import { formatUserResponse } from "../utils/auth.utils.js";
 import { AUTH_CONSTANTS } from "../constants/auth.constants.js";
+import { notificationService } from "../../notifications/index.js";
 import type { FastifyInstance } from "fastify";
 import type {
   RegisterInput,
@@ -28,6 +29,15 @@ export class AuthService {
 
     const passwordHash = await passwordService.hash(input.password);
     await authRepository.createUserWithProfile(input, passwordHash);
+
+    // Trigger welcome notification in background
+    notificationService
+      .notifyUserWelcome({
+        email: input.email,
+        firstName: input.firstName,
+        lastName: input.lastName,
+      })
+      .catch((err) => console.error("[AuthService] Welcome email error:", err));
 
     return { message: "User registered successfully" };
   }
