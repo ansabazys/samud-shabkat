@@ -63,6 +63,24 @@ export interface OrderQueryParams {
   fulfillmentType?: string;
 }
 
+export interface CreateOrderPayload {
+  companyName?: string;
+  contactPhone: string;
+  billingAddress?: string;
+  shippingAddress?: string;
+  fulfillmentType?: "STORE_PICKUP" | "HOME_DELIVERY";
+  paymentMethod?: "CASH_ON_DELIVERY" | "CASH_ON_PICKUP" | "CASH";
+  notes?: string;
+  items: Array<{
+    productId?: string;
+    productName: string;
+    sku: string;
+    unitPrice: number;
+    quantity: number;
+    specifications?: Record<string, unknown>;
+  }>;
+}
+
 export const ordersApi = {
   async getOrders(params?: OrderQueryParams): Promise<PaginatedOrdersResponse> {
     const res = await api.get<{
@@ -75,6 +93,14 @@ export const ordersApi = {
   async getOrderById(id: string): Promise<OrderRecord> {
     const res = await api.get<{ success: boolean; data: OrderRecord }>(
       `/orders/${id}`,
+    );
+    return res.data.data;
+  },
+
+  async createOrder(payload: CreateOrderPayload): Promise<OrderRecord> {
+    const res = await api.post<{ success: boolean; data: OrderRecord }>(
+      "/orders",
+      payload,
     );
     return res.data.data;
   },
