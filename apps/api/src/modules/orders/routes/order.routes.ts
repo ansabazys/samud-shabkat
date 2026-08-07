@@ -22,6 +22,12 @@ export async function orderRoutes(app: FastifyInstance) {
     "/",
     {
       preHandler: [authenticate],
+      config: {
+        rateLimit: {
+          max: 20,
+          timeWindow: "1 minute",
+        },
+      },
       schema: {
         body: createOrderSchema,
       },
