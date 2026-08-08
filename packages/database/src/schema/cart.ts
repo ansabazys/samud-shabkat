@@ -11,7 +11,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./auth.js";
 import { products } from "./catalog.js";
-import { warehouses } from "./inventory.js";
 
 export const carts = pgTable(
   "carts",
@@ -42,9 +41,6 @@ export const cartItems = pgTable(
     productId: uuid("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
-    warehouseId: uuid("warehouse_id")
-      .notNull()
-      .references(() => warehouses.id, { onDelete: "restrict" }),
     productNameSnapshot: varchar("product_name_snapshot", {
       length: 255,
     }).notNull(),
@@ -65,10 +61,9 @@ export const cartItems = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    cartProductWarehouseIdx: uniqueIndex("idx_cart_items_unique").on(
+    cartProductIdx: uniqueIndex("idx_cart_items_unique").on(
       table.cartId,
       table.productId,
-      table.warehouseId,
     ),
     cartIdx: index("idx_cart_items_cart_id").on(table.cartId),
     productIdx: index("idx_cart_items_product_id").on(table.productId),

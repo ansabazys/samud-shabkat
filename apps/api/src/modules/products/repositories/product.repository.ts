@@ -1,4 +1,10 @@
-import { products, categories, brands, productImages } from "@samud/database";
+import {
+  products,
+  categories,
+  brands,
+  productImages,
+  productInventory,
+} from "@samud/database";
 import {
   eq,
   and,
@@ -236,6 +242,13 @@ export class ProductRepository {
           })),
         );
       }
+
+      await tx.insert(productInventory).values({
+        productId: insertedProduct.id,
+        currentStock: 0,
+        reservedStock: 0,
+        reorderLevel: 10,
+      });
 
       return insertedProduct;
     });

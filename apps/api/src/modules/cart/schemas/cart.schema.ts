@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const addItemSchema = z.object({
   productId: z.string().uuid("Invalid product ID format"),
-  warehouseId: z.string().uuid("Invalid warehouse ID format").optional(),
   quantity: z.coerce
     .number()
     .int()

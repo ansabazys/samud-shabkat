@@ -18,12 +18,10 @@ export function useAddToCartMutation() {
     mutationFn: ({
       productId,
       quantity,
-      warehouseId,
     }: {
       productId: string;
       quantity?: number;
-      warehouseId?: string;
-    }) => cartApi.addItem(productId, quantity, warehouseId),
+    }) => cartApi.addItem(productId, quantity),
     onSuccess: (data) => {
       queryClient.setQueryData(["cart"], data);
       setDrawerOpen(true);

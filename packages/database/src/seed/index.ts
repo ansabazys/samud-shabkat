@@ -10,6 +10,7 @@ import {
   categories,
   brands,
   products,
+  productInventory,
   settings,
 } from "../schema/index.js";
 
@@ -291,6 +292,23 @@ async function seed() {
               "Thunderbolt 3 USB-C (60W PD), HDMI 2.0 x3, DisplayPort 1.2",
           },
           isActive: true,
+        })
+        .onConflictDoNothing();
+    }
+
+    // Seed initial single-pool product inventory
+    console.log("--> Seeding initial single-pool product inventory...");
+    const allProducts = await db.select().from(products);
+    for (const p of allProducts) {
+      await db
+        .insert(productInventory)
+        .values({
+          productId: p.id,
+          currentStock: 100,
+          reservedStock: 0,
+          reorderLevel: 10,
+          minStock: 5,
+          maxStock: 1000,
         })
         .onConflictDoNothing();
     }

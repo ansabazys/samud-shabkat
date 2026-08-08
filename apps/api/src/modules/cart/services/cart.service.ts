@@ -12,7 +12,6 @@ export class CartService {
       cart.items.map(async (item) => {
         const inventory = await inventoryService.getProductInventory(
           item.productId,
-          item.warehouseId,
         );
 
         const isStockValid = item.quantity <= inventory.availableStock;
@@ -46,21 +45,11 @@ export class CartService {
       throw new Error("Product is unavailable or inactive");
     }
 
-    const targetWarehouseId =
-      input.warehouseId ||
-      (
-        await (
-          await import("../../inventory/repositories/inventory.repository.js")
-        ).inventoryRepository.getDefaultWarehouse()
-      ).id;
-
     // Check existing cart items to compute cumulative requested quantity
     const cart = await cartRepository.findOrCreateActiveCart(userId);
     const cartDetails = await cartRepository.getCartWithItems(userId);
     const existingItem = cartDetails.items.find(
-      (item) =>
-        item.productId === input.productId &&
-        item.warehouseId === targetWarehouseId,
+      (item) => item.productId === input.productId,
     );
 
     const totalRequestedQuantity =
@@ -69,7 +58,6 @@ export class CartService {
     const stockValidation = await inventoryService.validateRequestedQuantity(
       input.productId,
       totalRequestedQuantity,
-      targetWarehouseId,
     );
 
     if (!stockValidation.valid) {
@@ -85,7 +73,6 @@ export class CartService {
         price: product.price,
         specifications: product.specifications,
       },
-      targetWarehouseId,
       input.quantity,
     );
 
@@ -109,7 +96,6 @@ export class CartService {
       const stockValidation = await inventoryService.validateRequestedQuantity(
         targetItem.productId,
         input.quantity,
-        targetItem.warehouseId,
       );
 
       if (!stockValidation.valid) {

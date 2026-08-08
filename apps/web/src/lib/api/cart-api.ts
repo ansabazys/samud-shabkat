@@ -4,7 +4,6 @@ export interface CartItem {
   id: string;
   cartId: string;
   productId: string;
-  warehouseId: string;
   productNameSnapshot: string;
   skuSnapshot: string;
   unitPriceSnapshot: string;
@@ -12,11 +11,6 @@ export interface CartItem {
   discount: string;
   subtotal: string;
   specificationsSnapshot: Record<string, unknown>;
-  warehouse: {
-    id: string;
-    name: string;
-    code: string;
-  };
   imageUrl: string | null;
   currentProductPrice: string;
   isProductActive: boolean;
@@ -47,17 +41,12 @@ export const cartApi = {
     return res.data.data;
   },
 
-  async addItem(
-    productId: string,
-    quantity = 1,
-    warehouseId?: string,
-  ): Promise<CartResponse> {
+  async addItem(productId: string, quantity = 1): Promise<CartResponse> {
     const res = await api.post<{ success: boolean; data: CartResponse }>(
       "/cart/items",
       {
         productId,
         quantity,
-        warehouseId,
       },
     );
     return res.data.data;

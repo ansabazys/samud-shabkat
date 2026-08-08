@@ -3,10 +3,18 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
+    "build": "tsc",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
@@ -15,13 +23,15 @@
   },
   "dependencies": {
     "@samud/config": "workspace:*",
+    "dotenv": "^16.5.0",
     "drizzle-orm": "^0.43.1",
     "postgres": "^3.4.7"
   },
   "devDependencies": {
+    "@types/node": "^22.15.19",
     "drizzle-kit": "^0.31.1",
     "tsx": "^4.19.4",
-    "@types/node": "^22.15.19",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "drizzle-kit": "^0.31.1"
   }
 }

@@ -1,8 +1,9 @@
-import { db } from "@samud/database";
+import { db, getDatabase } from "@samud/database";
 
 export function getDb() {
-  if (!db) {
+  const instance = db ?? getDatabase();
+  if (!instance) {
     throw new Error("Database client not initialized (DATABASE_URL missing)");
   }
-  return db;
+  return instance;
 }

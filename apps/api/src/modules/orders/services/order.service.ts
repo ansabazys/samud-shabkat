@@ -29,15 +29,12 @@ export class OrderService {
   }
 
   async createOrder(userId: string, data: CreateOrderInput) {
-    const defaultWh = await inventoryRepository.getDefaultWarehouse();
-
     // 1. Stock Validation for every item before starting transaction
     for (const item of data.items) {
       if (item.productId) {
         const validation = await inventoryService.validateRequestedQuantity(
           item.productId,
           item.quantity,
-          defaultWh.id,
         );
 
         if (!validation.valid) {
@@ -60,7 +57,6 @@ export class OrderService {
           await inventoryRepository.reserveStock(
             tx,
             item.productId,
-            defaultWh.id,
             order.id,
             item.quantity,
             userId,
@@ -99,7 +95,6 @@ export class OrderService {
       throw new Error("Order not found");
     }
 
-    const defaultWh = await inventoryRepository.getDefaultWarehouse();
     const database = getDb();
 
     const updated = await database.transaction(async (tx) => {
@@ -121,7 +116,6 @@ export class OrderService {
             await inventoryRepository.fulfillStock(
               tx,
               item.productId,
-              defaultWh.id,
               existing.id,
               item.quantity,
               userId,
@@ -134,7 +128,6 @@ export class OrderService {
             await inventoryRepository.releaseStock(
               tx,
               item.productId,
-              defaultWh.id,
               existing.id,
               item.quantity,
               userId,

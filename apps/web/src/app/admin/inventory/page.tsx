@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Search,
-  Warehouse,
+  Package,
   CheckCircle2,
   AlertTriangle,
   XCircle,
@@ -20,13 +20,12 @@ import {
 interface LowStockItem {
   id: string;
   productId: string;
-  warehouseId: string;
+  productName: string;
+  productSku: string;
   currentStock: number;
   reservedStock: number;
   availableStock: number;
   reorderLevel: number;
-  warehouseName: string;
-  warehouseCode: string;
 }
 
 export default function AdminInventoryPage() {
@@ -116,12 +115,12 @@ export default function AdminInventoryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Warehouse className="w-6 h-6 text-cyan-400" /> Stock & Inventory
+            <Package className="w-6 h-6 text-cyan-400" /> Stock & Inventory
             Management
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Real-time warehouse stock tracking, low-stock alerts, and restocking
-            adjustments
+            Real-time single-pool stock tracking, low-stock alerts, and
+            restocking adjustments
           </p>
         </div>
 
@@ -197,8 +196,7 @@ export default function AdminInventoryPage() {
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-slate-950/60 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
               <tr>
-                <th className="p-3.5 pl-4">Product ID</th>
-                <th className="p-3.5">Warehouse</th>
+                <th className="p-3.5 pl-4">Product Details</th>
                 <th className="p-3.5">Current Stock</th>
                 <th className="p-3.5">Reserved Stock</th>
                 <th className="p-3.5">Available Stock</th>
@@ -210,14 +208,14 @@ export default function AdminInventoryPage() {
             <tbody className="divide-y divide-slate-800/60">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-slate-500">
+                  <td colSpan={7} className="text-center py-12 text-slate-500">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-cyan-500" />
-                    Checking warehouse stock levels...
+                    Checking single-pool stock levels...
                   </td>
                 </tr>
               ) : lowStockItems.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-slate-500">
+                  <td colSpan={7} className="text-center py-12 text-slate-500">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
                     All products are adequately stocked above reorder
                     thresholds!
@@ -229,11 +227,13 @@ export default function AdminInventoryPage() {
                     key={item.id}
                     className="hover:bg-slate-800/40 transition"
                   >
-                    <td className="p-3.5 pl-4 font-mono font-bold text-white">
-                      {item.productId}
-                    </td>
-                    <td className="p-3.5 font-bold text-slate-300">
-                      {item.warehouseName} ({item.warehouseCode})
+                    <td className="p-3.5 pl-4">
+                      <span className="font-bold text-white block">
+                        {item.productName || item.productId}
+                      </span>
+                      <span className="text-[10px] font-mono text-cyan-400">
+                        SKU: {item.productSku || "—"}
+                      </span>
                     </td>
                     <td className="p-3.5 font-bold text-white">
                       {item.currentStock}
@@ -264,7 +264,6 @@ export default function AdminInventoryPage() {
                           setAdjustData((prev) => ({
                             ...prev,
                             productId: item.productId,
-                            warehouseId: item.warehouseId,
                             adjustmentType: "ADD",
                             quantity: 50,
                           }));

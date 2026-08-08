@@ -1,10 +1,4 @@
-import {
-  carts,
-  cartItems,
-  products,
-  warehouses,
-  productImages,
-} from "@samud/database";
+import { carts, cartItems, products, productImages } from "@samud/database";
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { getDb } from "../../../common/db.js";
 
@@ -43,13 +37,10 @@ export class CartRepository {
     const items = await database
       .select({
         cartItem: cartItems,
-        warehouseName: warehouses.name,
-        warehouseCode: warehouses.code,
         currentProductPrice: products.price,
         isProductActive: products.isActive,
       })
       .from(cartItems)
-      .innerJoin(warehouses, eq(cartItems.warehouseId, warehouses.id))
       .innerJoin(products, eq(cartItems.productId, products.id))
       .where(eq(cartItems.cartId, cart.id));
 
@@ -75,11 +66,6 @@ export class CartRepository {
 
     const formattedItems = items.map((item) => ({
       ...item.cartItem,
-      warehouse: {
-        id: item.cartItem.warehouseId,
-        name: item.warehouseName,
-        code: item.warehouseCode,
-      },
       imageUrl: imagesMap[item.cartItem.productId] || null,
       currentProductPrice: item.currentProductPrice,
       isProductActive: item.isProductActive,
@@ -114,7 +100,6 @@ export class CartRepository {
       price: string | number;
       specifications?: Record<string, unknown> | unknown;
     },
-    warehouseId: string,
     quantity: number,
   ) {
     const database = getDb();
@@ -124,11 +109,7 @@ export class CartRepository {
       .select()
       .from(cartItems)
       .where(
-        and(
-          eq(cartItems.cartId, cartId),
-          eq(cartItems.productId, product.id),
-          eq(cartItems.warehouseId, warehouseId),
-        ),
+        and(eq(cartItems.cartId, cartId), eq(cartItems.productId, product.id)),
       )
       .limit(1);
 
@@ -156,7 +137,6 @@ export class CartRepository {
       .values({
         cartId,
         productId: product.id,
-        warehouseId,
         productNameSnapshot: product.name,
         skuSnapshot: product.sku,
         unitPriceSnapshot: unitPrice,

@@ -9,7 +9,6 @@ import {
   Mail,
   MapPin,
   Package,
-  Warehouse,
 } from "lucide-react";
 
 export default function AdminOrderDetailPage({
@@ -33,8 +32,6 @@ export default function AdminOrderDetailPage({
     orderStatus: "PENDING",
     paymentStatus: "PENDING",
     createdAt: "August 6, 2026 at 2:30 PM",
-    warehouseCode: "DXB-MAIN",
-    warehouseName: "Main Dubai Warehouse",
     items: [
       {
         id: "item-1",
@@ -74,21 +71,6 @@ export default function AdminOrderDetailPage({
           <p className="text-xs text-slate-400">
             Placed on {mockOrderDetails.createdAt}
           </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs flex items-center gap-2">
-            <Warehouse className="w-4 h-4 text-cyan-400" />
-            <div>
-              <span className="text-[10px] text-slate-400 block">
-                Assigned Warehouse
-              </span>
-              <span className="font-bold text-white">
-                {mockOrderDetails.warehouseName} (
-                {mockOrderDetails.warehouseCode})
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 

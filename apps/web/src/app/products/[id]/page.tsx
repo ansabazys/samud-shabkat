@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Layers,
   Phone,
-  Warehouse,
   AlertTriangle,
 } from "lucide-react";
 import type { Product } from "@/lib/api";
@@ -45,8 +44,6 @@ const sampleProductsMap: Record<string, Product> = {
     brand: { id: "brand-cisco", name: "Cisco", slug: "cisco" },
     availableStock: 45,
     stockStatus: "IN_STOCK",
-    warehouseName: "Main Dubai Warehouse",
-    warehouseCode: "DXB-MAIN",
     images: [
       {
         id: "img-1",
@@ -67,8 +64,6 @@ export default function ProductDetailPage({
   const product = sampleProductsMap[productId] || sampleProductsMap["prod-1"];
 
   const availableStock = product.availableStock ?? 45;
-  const warehouseName =
-    product.warehouseName || "Main Dubai Warehouse (DXB-MAIN)";
   const isOutOfStock = availableStock <= 0;
   const isLowStock = availableStock > 0 && availableStock <= 10;
 
@@ -101,9 +96,6 @@ export default function ProductDetailPage({
             alt={product.name}
             className="w-full h-full object-cover rounded-2xl"
           />
-          <div className="absolute top-4 left-4 bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md">
-            <Warehouse className="w-3.5 h-3.5 text-cyan-400" /> {warehouseName}
-          </div>
         </div>
 
         {/* Product Info & Purchase Form */}
@@ -126,8 +118,8 @@ export default function ProductDetailPage({
               <div>
                 <span className="font-bold block">Low Stock Alert</span>
                 <span>
-                  Only {availableStock} units remaining in warehouse. Order soon
-                  to reserve hardware.
+                  Only {availableStock} units remaining. Order soon to reserve
+                  hardware.
                 </span>
               </div>
             </div>

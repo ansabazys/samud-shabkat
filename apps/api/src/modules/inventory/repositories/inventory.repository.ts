@@ -1,79 +1,26 @@
 import {
-  warehouses,
   productInventory,
   inventoryTransactions,
+  products,
 } from "@samud/database";
-import { eq, and, sql, isNull } from "drizzle-orm";
+import { eq, and, sql, ilike } from "drizzle-orm";
 import { getDb } from "../../../common/db.js";
 
 export class InventoryRepository {
-  async getDefaultWarehouse() {
-    const database = getDb();
-    const [warehouse] = await database
-      .select()
-      .from(warehouses)
-      .where(and(eq(warehouses.isDefault, true), isNull(warehouses.deletedAt)))
-      .limit(1);
-
-    if (!warehouse) {
-      // Fallback to first available warehouse or create default DXB-MAIN
-      const [first] = await database
-        .select()
-        .from(warehouses)
-        .where(isNull(warehouses.deletedAt))
-        .limit(1);
-
-      if (first) return first;
-
-      const [created] = await database
-        .insert(warehouses)
-        .values({
-          name: "Main Dubai Warehouse",
-          code: "DXB-MAIN",
-          address: "Dubai Silicon Oasis, Dubai, UAE",
-          isDefault: true,
-          isActive: true,
-        })
-        .returning();
-
-      return created;
-    }
-
-    return warehouse;
-  }
-
-  async getAllWarehouses() {
-    return getDb()
-      .select()
-      .from(warehouses)
-      .where(and(eq(warehouses.isActive, true), isNull(warehouses.deletedAt)));
-  }
-
-  async findByProductIdAndWarehouseId(productId: string, warehouseId: string) {
+  async findByProductId(productId: string) {
     const database = getDb();
     const [record] = await database
-      .select({
-        inventory: productInventory,
-        warehouseName: warehouses.name,
-        warehouseCode: warehouses.code,
-      })
+      .select()
       .from(productInventory)
-      .innerJoin(warehouses, eq(productInventory.warehouseId, warehouses.id))
-      .where(
-        and(
-          eq(productInventory.productId, productId),
-          eq(productInventory.warehouseId, warehouseId),
-        ),
-      )
+      .where(eq(productInventory.productId, productId))
       .limit(1);
 
     if (!record) {
-      // Initialize default inventory record (50 stock, 0 reserved) for active testing if not seeded
+      // Auto-create default single-pool inventory record if not pre-seeded
       const [created] = await database
         .insert(productInventory)
         .values({
           productId,
-          warehouseId,
           currentStock: 50,
           reservedStock: 0,
           minStock: 5,
@@ -82,39 +29,27 @@ export class InventoryRepository {
         })
         .returning();
 
-      const [wh] = await database
-        .select()
-        .from(warehouses)
-        .where(eq(warehouses.id, warehouseId))
-        .limit(1);
-
       return {
         ...created,
-        warehouseName: wh?.name ?? "Main Dubai Warehouse",
-        warehouseCode: wh?.code ?? "DXB-MAIN",
+        availableStock: created.currentStock - created.reservedStock,
       };
     }
 
     return {
-      ...record.inventory,
-      warehouseName: record.warehouseName,
-      warehouseCode: record.warehouseCode,
+      ...record,
+      availableStock: record.currentStock - record.reservedStock,
     };
   }
 
   async reserveStock(
     tx: unknown,
     productId: string,
-    warehouseId: string,
     orderId: string,
     quantity: number,
     userId?: string,
   ) {
     const database = (tx as ReturnType<typeof getDb>) || getDb();
-    const currentInv = await this.findByProductIdAndWarehouseId(
-      productId,
-      warehouseId,
-    );
+    const currentInv = await this.findByProductId(productId);
 
     const newReserved = currentInv.reservedStock + quantity;
 
@@ -129,7 +64,6 @@ export class InventoryRepository {
     // Audit transaction
     await database.insert(inventoryTransactions).values({
       productId,
-      warehouseId,
       orderId,
       transactionType: "RESERVATION",
       quantityDelta: 0,
@@ -144,16 +78,12 @@ export class InventoryRepository {
   async releaseStock(
     tx: unknown,
     productId: string,
-    warehouseId: string,
     orderId: string,
     quantity: number,
     userId?: string,
   ) {
     const database = (tx as ReturnType<typeof getDb>) || getDb();
-    const currentInv = await this.findByProductIdAndWarehouseId(
-      productId,
-      warehouseId,
-    );
+    const currentInv = await this.findByProductId(productId);
 
     const newReserved = Math.max(0, currentInv.reservedStock - quantity);
 
@@ -168,7 +98,6 @@ export class InventoryRepository {
     // Audit transaction
     await database.insert(inventoryTransactions).values({
       productId,
-      warehouseId,
       orderId,
       transactionType: "RELEASE",
       quantityDelta: 0,
@@ -183,16 +112,12 @@ export class InventoryRepository {
   async fulfillStock(
     tx: unknown,
     productId: string,
-    warehouseId: string,
     orderId: string,
     quantity: number,
     userId?: string,
   ) {
     const database = (tx as ReturnType<typeof getDb>) || getDb();
-    const currentInv = await this.findByProductIdAndWarehouseId(
-      productId,
-      warehouseId,
-    );
+    const currentInv = await this.findByProductId(productId);
 
     const newCurrent = Math.max(0, currentInv.currentStock - quantity);
     const newReserved = Math.max(0, currentInv.reservedStock - quantity);
@@ -209,7 +134,6 @@ export class InventoryRepository {
     // Audit transaction
     await database.insert(inventoryTransactions).values({
       productId,
-      warehouseId,
       orderId,
       transactionType: "SALE",
       quantityDelta: -quantity,
@@ -223,7 +147,6 @@ export class InventoryRepository {
 
   async adjustStock(
     productId: string,
-    warehouseId: string,
     adjustmentType: "ADD" | "SUBTRACT" | "SET",
     quantity: number,
     reference?: string,
@@ -231,10 +154,7 @@ export class InventoryRepository {
     userId?: string,
   ) {
     const database = getDb();
-    const currentInv = await this.findByProductIdAndWarehouseId(
-      productId,
-      warehouseId,
-    );
+    const currentInv = await this.findByProductId(productId);
 
     let newCurrentStock = currentInv.currentStock;
     let quantityDelta = 0;
@@ -262,7 +182,6 @@ export class InventoryRepository {
       .insert(inventoryTransactions)
       .values({
         productId,
-        warehouseId,
         transactionType: "ADJUSTMENT",
         quantityDelta,
         reservedDelta: 0,
@@ -277,7 +196,6 @@ export class InventoryRepository {
     return {
       inventoryId: currentInv.id,
       productId,
-      warehouseId,
       previousStock: currentInv.currentStock,
       currentStock: newCurrentStock,
       reservedStock: currentInv.reservedStock,
@@ -286,22 +204,19 @@ export class InventoryRepository {
     };
   }
 
-  async findLowStock(params: {
-    page: number;
-    limit: number;
-    search?: string;
-    warehouseId?: string;
-  }) {
+  async findLowStock(params: { page: number; limit: number; search?: string }) {
     const database = getDb();
-    const { page, limit, warehouseId } = params;
+    const { page, limit, search } = params;
     const offset = (page - 1) * limit;
 
     const conditions = [
       sql`${productInventory.currentStock} <= ${productInventory.reorderLevel}`,
     ];
 
-    if (warehouseId) {
-      conditions.push(eq(productInventory.warehouseId, warehouseId));
+    if (search) {
+      conditions.push(
+        sql`${productInventory.productId} IN (SELECT id FROM ${products} WHERE ${ilike(products.name, `%${search}%`)} OR ${ilike(products.sku, `%${search}%`)})`,
+      );
     }
 
     const whereClause = and(...conditions);
@@ -316,19 +231,19 @@ export class InventoryRepository {
     const rows = await database
       .select({
         inventory: productInventory,
-        warehouseName: warehouses.name,
-        warehouseCode: warehouses.code,
+        productName: products.name,
+        productSku: products.sku,
       })
       .from(productInventory)
-      .innerJoin(warehouses, eq(productInventory.warehouseId, warehouses.id))
+      .innerJoin(products, eq(productInventory.productId, products.id))
       .where(whereClause)
       .limit(limit)
       .offset(offset);
 
     const data = rows.map((r) => ({
       ...r.inventory,
-      warehouseName: r.warehouseName,
-      warehouseCode: r.warehouseCode,
+      productName: r.productName,
+      productSku: r.productSku,
       availableStock: r.inventory.currentStock - r.inventory.reservedStock,
     }));
 
@@ -345,17 +260,14 @@ export class InventoryRepository {
     page: number;
     limit: number;
     productId?: string;
-    warehouseId?: string;
   }) {
     const database = getDb();
-    const { page, limit, productId, warehouseId } = params;
+    const { page, limit, productId } = params;
     const offset = (page - 1) * limit;
 
     const conditions = [];
     if (productId)
       conditions.push(eq(inventoryTransactions.productId, productId));
-    if (warehouseId)
-      conditions.push(eq(inventoryTransactions.warehouseId, warehouseId));
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 

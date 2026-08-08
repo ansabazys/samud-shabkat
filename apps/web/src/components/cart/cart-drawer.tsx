@@ -8,7 +8,6 @@ import {
   ShoppingBag,
   Plus,
   Minus,
-  Warehouse,
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
@@ -68,8 +67,8 @@ export function CartDrawer() {
             <div className="bg-amber-950/80 border-b border-amber-500/30 p-3.5 px-6 flex items-center gap-2.5 text-xs text-amber-200">
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
               <span>
-                Some items exceed available stock in warehouse. Please reduce
-                quantity before checkout.
+                Some items exceed available stock. Please reduce quantity before
+                checkout.
               </span>
             </div>
           )}
@@ -98,7 +97,6 @@ export function CartDrawer() {
 
                 const availableStock = item.product.availableStock ?? 45;
                 const isExceedingStock = item.quantity > availableStock;
-                const warehouseCode = item.product.warehouseCode || "DXB-MAIN";
 
                 return (
                   <div
@@ -120,10 +118,6 @@ export function CartDrawer() {
                         <div className="flex items-center justify-between gap-1 mb-1">
                           <span className="text-[10px] font-mono text-cyan-400 font-semibold truncate">
                             SKU: {item.product.sku}
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
-                            <Warehouse className="w-2.5 h-2.5 text-cyan-400" />{" "}
-                            {warehouseCode}
                           </span>
                         </div>
 

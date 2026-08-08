@@ -7,6 +7,7 @@ import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import { jsonSchemaTransform } from "fastify-type-provider-zod";
 
 export async function registerPlugins(app: FastifyInstance) {
   await app.register(helmet);
@@ -14,9 +15,11 @@ export async function registerPlugins(app: FastifyInstance) {
     origin: process.env.CORS_ORIGIN ?? true,
     credentials: true,
   });
-  await app.register(cookie, { secret: process.env.COOKIE_SECRET });
+  await app.register(cookie, {
+    secret: process.env.COOKIE_SECRET || "development-cookie-secret",
+  });
   await app.register(jwt, {
-    secret: process.env.JWT_SECRET ?? "development-secret",
+    secret: process.env.JWT_SECRET || "development-jwt-secret",
   });
   await app.register(rateLimit, {
     max: 100,
@@ -31,6 +34,7 @@ export async function registerPlugins(app: FastifyInstance) {
   await app.register(multipart);
   await app.register(swagger, {
     openapi: { info: { title: "Samud Shabkat API", version: "0.0.0" } },
+    transform: jsonSchemaTransform,
   });
   await app.register(swaggerUi, { routePrefix: "/documentation" });
 }

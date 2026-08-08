@@ -5,9 +5,6 @@ export type StockStatus =
 
 export interface ComputedInventory {
   productId: string;
-  warehouseId: string;
-  warehouseName: string;
-  warehouseCode: string;
   currentStock: number;
   reservedStock: number;
   availableStock: number;
@@ -21,18 +18,8 @@ export interface ComputedInventory {
 }
 
 export class InventoryService {
-  async getProductInventory(
-    productId: string,
-    warehouseId?: string,
-  ): Promise<ComputedInventory> {
-    const targetWarehouse = warehouseId
-      ? { id: warehouseId }
-      : await inventoryRepository.getDefaultWarehouse();
-
-    const inv = await inventoryRepository.findByProductIdAndWarehouseId(
-      productId,
-      targetWarehouse.id,
-    );
+  async getProductInventory(productId: string): Promise<ComputedInventory> {
+    const inv = await inventoryRepository.findByProductId(productId);
 
     const availableStock = Math.max(0, inv.currentStock - inv.reservedStock);
 
@@ -45,9 +32,6 @@ export class InventoryService {
 
     return {
       productId: inv.productId,
-      warehouseId: inv.warehouseId,
-      warehouseName: inv.warehouseName,
-      warehouseCode: inv.warehouseCode,
       currentStock: inv.currentStock,
       reservedStock: inv.reservedStock,
       availableStock,
@@ -64,9 +48,8 @@ export class InventoryService {
   async validateRequestedQuantity(
     productId: string,
     requestedQuantity: number,
-    warehouseId?: string,
   ) {
-    const inv = await this.getProductInventory(productId, warehouseId);
+    const inv = await this.getProductInventory(productId);
 
     if (requestedQuantity <= 0) {
       return {
@@ -79,7 +62,7 @@ export class InventoryService {
     if (requestedQuantity > inv.availableStock) {
       return {
         valid: false,
-        message: `Requested quantity (${requestedQuantity}) exceeds available stock (${inv.availableStock}) in ${inv.warehouseName}`,
+        message: `Requested quantity (${requestedQuantity}) exceeds available stock (${inv.availableStock})`,
         availableStock: inv.availableStock,
       };
     }
@@ -87,18 +70,12 @@ export class InventoryService {
     return {
       valid: true,
       availableStock: inv.availableStock,
-      warehouseId: inv.warehouseId,
     };
-  }
-
-  async getAllWarehouses() {
-    return inventoryRepository.getAllWarehouses();
   }
 
   async adjustStock(
     input: {
       productId: string;
-      warehouseId?: string;
       adjustmentType: "ADD" | "SUBTRACT" | "SET";
       quantity: number;
       reference?: string;
@@ -106,13 +83,8 @@ export class InventoryService {
     },
     userId?: string,
   ) {
-    const targetWh = input.warehouseId
-      ? { id: input.warehouseId }
-      : await inventoryRepository.getDefaultWarehouse();
-
     return inventoryRepository.adjustStock(
       input.productId,
-      targetWh.id,
       input.adjustmentType,
       input.quantity,
       input.reference,
@@ -121,12 +93,7 @@ export class InventoryService {
     );
   }
 
-  async getLowStock(params: {
-    page: number;
-    limit: number;
-    search?: string;
-    warehouseId?: string;
-  }) {
+  async getLowStock(params: { page: number; limit: number; search?: string }) {
     return inventoryRepository.findLowStock(params);
   }
 
@@ -134,7 +101,6 @@ export class InventoryService {
     page: number;
     limit: number;
     productId?: string;
-    warehouseId?: string;
   }) {
     return inventoryRepository.findTransactions(params);
   }

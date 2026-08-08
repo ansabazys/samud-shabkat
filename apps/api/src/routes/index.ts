@@ -1,4 +1,6 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { sql } from "drizzle-orm";
+import { getDb } from "../common/db.js";
 import { authRoutes } from "../modules/auth/index.js";
 import { usersRoutes } from "../modules/users/index.js";
 import { categoryRoutes } from "../modules/categories/index.js";
@@ -12,7 +14,37 @@ import { inventoryRoutes } from "../modules/inventory/index.js";
 import { mediaRoutes } from "../modules/media/index.js";
 
 export async function registerRoutes(app: FastifyInstance) {
-  app.get("/health", async () => ({ status: "ok" }));
+  const checkHealth = async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const database = getDb();
+      const startTime = Date.now();
+      await database.execute(sql`SELECT 1`);
+      const latencyMs = Date.now() - startTime;
+
+      return {
+        status: "ok",
+        database: {
+          status: "connected",
+          latencyMs,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error: unknown) {
+      reply.status(503);
+      const errorMessage =
+        error instanceof Error ? error.message : "Database connection failed";
+      return {
+        status: "unhealthy",
+        database: {
+          status: "disconnected",
+          error: errorMessage,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+  };
+
+  app.get("/health", checkHealth);
 
   await app.register(authRoutes, { prefix: "/api/v1/auth" });
   await app.register(usersRoutes, { prefix: "/api/v1/users" });

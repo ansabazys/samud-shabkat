@@ -2,9 +2,6 @@ import { api } from "../api";
 
 export interface InventoryDetails {
   productId: string;
-  warehouseId: string;
-  warehouseName: string;
-  warehouseCode: string;
   currentStock: number;
   reservedStock: number;
   availableStock: number;
@@ -20,7 +17,6 @@ export interface InventoryDetails {
 
 export interface AdjustInventoryPayload {
   productId: string;
-  warehouseId?: string;
   adjustmentType: "ADD" | "SUBTRACT" | "SET";
   quantity: number;
   reference?: string;
@@ -30,7 +26,6 @@ export interface AdjustInventoryPayload {
 export interface InventoryTransactionRecord {
   id: string;
   productId: string;
-  warehouseId: string;
   orderId?: string | null;
   transactionType: string;
   quantityDelta: number;
@@ -46,13 +41,12 @@ export interface PaginatedLowStockResponse {
   data: Array<{
     id: string;
     productId: string;
-    warehouseId: string;
+    productName: string;
+    productSku: string;
     currentStock: number;
     reservedStock: number;
     availableStock: number;
     reorderLevel: number;
-    warehouseName: string;
-    warehouseCode: string;
   }>;
   total: number;
   page: number;
@@ -61,15 +55,9 @@ export interface PaginatedLowStockResponse {
 }
 
 export const inventoryApi = {
-  async getProductInventory(
-    productId: string,
-    warehouseId?: string,
-  ): Promise<InventoryDetails> {
+  async getProductInventory(productId: string): Promise<InventoryDetails> {
     const res = await api.get<{ success: boolean; data: InventoryDetails }>(
       `/inventory/products/${productId}`,
-      {
-        params: { warehouseId },
-      },
     );
     return res.data.data;
   },
