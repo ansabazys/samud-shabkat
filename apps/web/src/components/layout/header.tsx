@@ -72,19 +72,7 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-sky-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition">
-              <Box className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <span className="text-xl font-bold tracking-tight text-white group-hover:text-cyan-400 transition">
-                Samud<span className="text-cyan-400">Shabkat</span>
-              </span>
-              <span className="block text-[10px] uppercase tracking-widest text-slate-400 font-semibold">
-                Network & Hardware
-              </span>
-            </div>
-          </Link>
+          <Link href="/" className="flex items-center gap-3 group"></Link>
 
           {/* Search Bar */}
           <form
