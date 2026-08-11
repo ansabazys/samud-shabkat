@@ -12,7 +12,7 @@ export function HomepageCTA() {
         </span>
 
         <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight font-sans">
-          Find something you'll love.
+          Find something you&apos;ll love.
         </h2>
 
         <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed">

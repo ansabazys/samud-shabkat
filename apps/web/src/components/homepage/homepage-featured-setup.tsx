@@ -22,7 +22,7 @@ export function HomepageFeaturedSetup() {
               {/* Hotspot Floating Badges */}
               <div className="hidden sm:flex absolute top-12 right-12 bg-white/95 backdrop-blur-md border border-neutral-200 px-3.5 py-2 rounded-xl shadow-md items-center gap-2 text-xs font-bold text-slate-900">
                 <Monitor className="w-4 h-4 text-cyan-600" />
-                <span>ASUS ProArt 32" 4K HDR</span>
+                <span>ASUS ProArt 32&quot; 4K HDR</span>
               </div>
 
               <div className="hidden sm:flex absolute bottom-12 left-12 bg-white/95 backdrop-blur-md border border-neutral-200 px-3.5 py-2 rounded-xl shadow-md items-center gap-2 text-xs font-bold text-slate-900">

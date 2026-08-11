@@ -7,11 +7,12 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHomepage = pathname === "/";
+  const isAdminPage = pathname.startsWith("/admin");
+  const isAuthPage = pathname === "/login" || pathname === "/register";
 
-  if (isHomepage) {
+  if (isAdminPage || isAuthPage) {
     return (
-      <div className="min-h-full flex flex-col bg-[#FAF9F6] text-slate-900 selection:bg-cyan-600 selection:text-white">
+      <div className="min-h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-white">
         {children}
         <CartDrawer />
       </div>
@@ -19,11 +20,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-white">
+    <div className="min-h-full flex flex-col bg-[#FAF9F6] text-slate-900 selection:bg-emerald-600 selection:text-white">
       <Header />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      <main className="flex-1 w-full">{children}</main>
       <CartDrawer />
       <Footer />
     </div>
