@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  Box,
   Mail,
   Phone,
   MapPin,
@@ -11,174 +10,181 @@ import {
 
 export function Footer() {
   return (
-    <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-sm mt-20">
-      {/* Feature Badges */}
-      <div className="border-b border-slate-800/60 bg-slate-900/40">
-        <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left">
-          <div className="flex items-center justify-center sm:justify-start gap-4">
-            <div className="p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/20 text-cyan-400">
-              <Truck className="w-6 h-6" />
+    <footer className="w-full bg-[#F4F5F7] border-t border-slate-200/80 font-sans text-slate-900 mt-16 pt-10 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Top Feature Guarantee Bar */}
+        <div className="bg-white border-2 border-[#FFD400] rounded-2xl p-5 mb-10 shadow-2xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-900 shrink-0">
+                <Truck className="w-6 h-6 stroke-[1.5]" />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight">
+                  Fast KSA & GCC Shipping
+                </h4>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                  Express delivery across Riyadh, Jeddah & Dammam
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-white">Fast GCC Shipping</h4>
-              <p className="text-xs text-slate-400">
-                Same-day dispatch for Dubai & UAE
-              </p>
+
+            <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:pl-6">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-900 shrink-0">
+                <ShieldCheck className="w-6 h-6 stroke-[1.5]" />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight">
+                  100% Genuine Hardware
+                </h4>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                  Official manufacturer warranty guaranteed
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:pl-6">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-900 shrink-0">
+                <Headphones className="w-6 h-6 stroke-[1.5]" />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight">
+                  Dedicated B2B Support
+                </h4>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                  Account managers & certified engineers on standby
+                </p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center justify-center sm:justify-start gap-4">
-            <div className="p-3 rounded-xl bg-sky-950/60 border border-sky-500/20 text-sky-400">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-white">
-                100% Genuine Hardware
-              </h4>
-              <p className="text-xs text-slate-400">
-                Full manufacturer warranty guaranteed
-              </p>
-            </div>
+        </div>
+
+        {/* 4-Column Links Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12 pb-8 border-b border-slate-200/80">
+          {/* Column 1: Brand Summary */}
+          <div className="space-y-3">
+            <Link href="/" className="inline-block">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 font-sans">
+                samud<span className="text-amber-500">.</span>shabkat
+              </span>
+            </Link>
+            <p className="text-xs text-slate-600 leading-relaxed font-medium">
+              Saudi Arabia’s premier distributor of enterprise networking
+              equipment, servers, computers, workstations, and high-performance
+              IT components.
+            </p>
           </div>
-          <div className="flex items-center justify-center sm:justify-start gap-4">
-            <div className="p-3 rounded-xl bg-indigo-950/60 border border-indigo-500/20 text-indigo-400">
-              <Headphones className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-white">B2B Sales Support</h4>
-              <p className="text-xs text-slate-400">
-                Dedicated account managers available
-              </p>
-            </div>
+
+          {/* Column 2: Quick Links */}
+          <div>
+            <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight mb-4 relative inline-block">
+              Quick Links
+              <span className="absolute bottom-[-6px] left-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
+            </h3>
+            <ul className="space-y-2.5 text-xs font-semibold text-slate-600">
+              <li>
+                <Link
+                  href="/products"
+                  className="hover:text-amber-600 transition"
+                >
+                  All Products Catalog
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products?deals=true"
+                  className="hover:text-amber-600 transition"
+                >
+                  Hot Deals & Promotions
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/brands"
+                  className="hover:text-amber-600 transition"
+                >
+                  Featured Partner Brands
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-amber-600 transition">
+                  About Samud Shabkat
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3: Hardware Categories */}
+          <div>
+            <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight mb-4 relative inline-block">
+              Hardware Categories
+              <span className="absolute bottom-[-6px] left-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
+            </h3>
+            <ul className="space-y-2.5 text-xs font-semibold text-slate-600">
+              <li>
+                <Link
+                  href="/products?category=networking"
+                  className="hover:text-amber-600 transition"
+                >
+                  Switches & Routers
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products?category=computers"
+                  className="hover:text-amber-600 transition"
+                >
+                  Workstations & Laptops
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products?category=servers-nas"
+                  className="hover:text-amber-600 transition"
+                >
+                  Rack Servers & NAS Storage
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products?category=components"
+                  className="hover:text-amber-600 transition"
+                >
+                  GPUs & Processors
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: Contact Information */}
+          <div>
+            <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight mb-4 relative inline-block">
+              Contact Us
+              <span className="absolute bottom-[-6px] left-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
+            </h3>
+            <ul className="space-y-3 text-xs font-semibold text-slate-600">
+              <li className="flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 text-slate-800 shrink-0 mt-0.5" />
+                <span>Olaya District, King Fahd Road, Riyadh, KSA</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-slate-800 shrink-0" />
+                <span>+966 11 234 5678</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-slate-800 shrink-0" />
+                <span>sales@samudshabkat.com</span>
+              </li>
+            </ul>
           </div>
         </div>
-      </div>
 
-      {/* Main Footer Links */}
-      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div>
-          <Link href="/" className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-500 flex items-center justify-center text-white font-bold">
-              <Box className="w-5 h-5" />
-            </div>
-            <span className="text-lg font-bold text-white">
-              Samud<span className="text-cyan-400">Shabkat</span>
-            </span>
-          </Link>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Leading B2B distributor of enterprise network hardware, servers,
-            fiber optics, and telecom equipment across UAE and the Middle East.
-          </p>
-        </div>
-
-        <div>
-          <h3 className="text-white font-semibold mb-4 text-xs uppercase tracking-wider">
-            Quick Links
-          </h3>
-          <ul className="space-y-2.5 text-xs">
-            <li>
-              <Link href="/products" className="hover:text-cyan-400 transition">
-                Product Catalog
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/categories"
-                className="hover:text-cyan-400 transition"
-              >
-                Browse Categories
-              </Link>
-            </li>
-            <li>
-              <Link href="/brands" className="hover:text-cyan-400 transition">
-                Our Partner Brands
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/account/orders"
-                className="hover:text-cyan-400 transition"
-              >
-                Order History
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="text-white font-semibold mb-4 text-xs uppercase tracking-wider">
-            Categories
-          </h3>
-          <ul className="space-y-2.5 text-xs">
-            <li>
-              <Link
-                href="/products?category=networking"
-                className="hover:text-cyan-400 transition"
-              >
-                Switches & Routers
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/products?category=fiber-optics"
-                className="hover:text-cyan-400 transition"
-              >
-                Fiber Optic Cables
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/products?category=servers"
-                className="hover:text-cyan-400 transition"
-              >
-                Rack Servers & Enclosures
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/products?category=wireless"
-                className="hover:text-cyan-400 transition"
-              >
-                Enterprise Access Points
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="text-white font-semibold mb-4 text-xs uppercase tracking-wider">
-            Contact Info
-          </h3>
-          <ul className="space-y-3 text-xs">
-            <li className="flex items-start gap-2.5">
-              <MapPin className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-              <span>Dubai Silicon Oasis, Dubai, UAE</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <Phone className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span>+971 4 123 4567</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <Mail className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span>sales@samudshabkat.com</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Bottom Copyright Bar */}
+        <div className="pt-6 text-center text-xs font-semibold text-slate-500">
           <p>
-            © {new Date().getFullYear()} Samud Shabkat E-Commerce Ordering
-            Platform. All rights reserved.
+            © {new Date().getFullYear()} Samud Shabkat Technology Co. All rights
+            reserved.
           </p>
-          <div className="flex gap-4">
-            <span className="hover:text-slate-400 transition cursor-pointer">
-              Privacy Policy
-            </span>
-            <span className="hover:text-slate-400 transition cursor-pointer">
-              Terms of Wholesale
-            </span>
-          </div>
         </div>
       </div>
     </footer>
