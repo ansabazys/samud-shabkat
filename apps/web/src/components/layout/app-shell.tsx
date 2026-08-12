@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
+// import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Header />
       <main className="flex-1 w-full">{children}</main>
       <CartDrawer />
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
