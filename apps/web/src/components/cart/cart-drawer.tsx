@@ -84,7 +84,7 @@ export function CartDrawer() {
                   </span>
                 ) : (
                   <span className="font-extrabold text-emerald-950">
-                    🎉 You've unlocked Free KSA Express Delivery!
+                    🎉 You&apos;ve unlocked Free KSA Express Delivery!
                   </span>
                 )}
               </div>

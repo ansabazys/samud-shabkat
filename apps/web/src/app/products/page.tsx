@@ -406,8 +406,8 @@ export default function ProductsPage() {
                   No Products Found
                 </h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-                  We couldn't find any products matching your search criteria.
-                  Try clearing some filters.
+                  We couldn&apos;t find any products matching your search
+                  criteria. Try clearing some filters.
                 </p>
                 <button
                   onClick={handleResetFilters}

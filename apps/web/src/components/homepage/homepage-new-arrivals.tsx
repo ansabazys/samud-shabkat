@@ -97,8 +97,14 @@ export function HomepageNewArrivals() {
           <span className="absolute bottom-[-13px] left-0 w-full h-[3px] bg-[#FFD400] rounded-full" />
         </h2>
 
-        {/* Arrow Navigation Controls */}
-        <div className="flex items-center gap-2">
+        {/* Arrow Navigation Controls & View All */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/new-arrivals"
+            className="text-xs font-bold text-[#15803d] hover:text-emerald-800 transition underline underline-offset-4 mr-1"
+          >
+            View All New Arrivals
+          </Link>
           <button
             className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer"
             aria-label="Previous New Arrival"

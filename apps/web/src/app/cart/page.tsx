@@ -104,7 +104,7 @@ export default function CartPage() {
                 Your Shopping Cart is Empty
               </h2>
               <p className="text-xs font-medium text-slate-500 max-w-sm mx-auto">
-                Looks like you haven't added any products to your cart yet.
+                Looks like you haven&apos;t added any products to your cart yet.
                 Explore our catalog to find hardware deals.
               </p>
             </div>
@@ -296,7 +296,9 @@ export default function CartPage() {
                   </div>
                   {appliedCoupon && (
                     <div className="flex items-center justify-between bg-emerald-50 text-emerald-800 text-[11px] font-extrabold px-3 py-1.5 rounded-lg border border-emerald-200">
-                      <span>Code '{appliedCoupon}' Applied (10% OFF)</span>
+                      <span>
+                        Code &apos;{appliedCoupon}&apos; Applied (10% OFF)
+                      </span>
                       <Check className="w-3.5 h-3.5 text-emerald-600" />
                     </div>
                   )}

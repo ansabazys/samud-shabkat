@@ -247,7 +247,7 @@ export function Header() {
               Products
             </Link>
             <Link
-              href="/products?new=true"
+              href="/new-arrivals"
               className="px-2 py-1 hover:text-emerald-600 transition-colors whitespace-nowrap flex items-center gap-1"
             >
               <span>New Arrivals</span>
@@ -335,7 +335,7 @@ export function Header() {
               Products
             </Link>
             <Link
-              href="/products?new=true"
+              href="/new-arrivals"
               onClick={() => setMobileMenuOpen(false)}
               className="p-2 hover:bg-slate-50 rounded-lg flex items-center justify-between"
             >
