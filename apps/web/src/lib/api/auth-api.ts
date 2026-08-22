@@ -6,6 +6,8 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   role: "ADMIN" | "CUSTOMER" | "SUPER_ADMIN" | "MANAGER";
+  companyName?: string;
+  phoneNumber?: string;
   avatarUrl?: string;
   createdAt?: string;
 }

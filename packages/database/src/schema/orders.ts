@@ -27,16 +27,16 @@ export const orders = pgTable(
       .default("PENDING")
       .notNull(),
     fulfillmentType: varchar("fulfillment_type", { length: 50 })
-      .default("HOME_DELIVERY")
+      .default("STORE_PICKUP")
       .notNull(),
     paymentMethod: varchar("payment_method", { length: 50 })
-      .default("CASH_ON_DELIVERY")
+      .default("CASH_ON_PICKUP")
       .notNull(),
     totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
     companyName: varchar("company_name", { length: 255 }),
     contactPhone: varchar("contact_phone", { length: 30 }),
-    billingAddress: text("billing_address").notNull(),
-    shippingAddress: text("shipping_address").notNull(),
+    billingAddress: text("billing_address").default("Store Address").notNull(),
+    shippingAddress: text("shipping_address").default("Store Pickup").notNull(),
     notes: text("notes"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

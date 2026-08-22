@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   Truck,
@@ -12,39 +13,45 @@ import {
   Printer,
   Store,
   Banknote,
+  Loader2,
+  AlertCircle,
+  LogIn,
 } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
+import { useAuthStore } from "@/store/auth-store";
+import { ordersApi, type CreateOrderPayload, type OrderRecord } from "@/lib/api/orders-api";
 
 const STORE_LOCATIONS = [
   {
     id: "loc-1",
-    name: "Riyadh Main Store - Olaya Computer Market",
-    address: "King Fahd Road, Olaya Computer Market, Riyadh",
-    hours: "9:00 AM - 10:00 PM",
+    name: "Samud Shabkat - Main IT Hardware & Technology Hub",
+    address: "Technology Market, Main Store Branch",
+    hours: "9:00 AM - 9:00 PM",
   },
   {
     id: "loc-2",
-    name: "Jeddah Store - Palestine Street Hardware Center",
-    address: "Palestine Street, Computer Center, Jeddah",
-    hours: "9:30 AM - 10:30 PM",
+    name: "Samud Shabkat - Distribution & Service Counter",
+    address: "Commercial Center, Secondary Store Branch",
+    hours: "9:30 AM - 8:30 PM",
   },
 ];
 
-const SAUDI_CITIES = [
+const CITIES = [
   "Riyadh",
   "Jeddah",
   "Dammam",
   "Khobar",
   "Mecca",
   "Medina",
-  "Dhahran",
-  "Tabuk",
-  "Buraidah",
-  "Abha",
+  "Kochi",
+  "Calicut",
+  "Trivandrum",
 ];
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { items, clearCart, getTotalPrice, getTotalItems } = useCartStore();
+  const { user, isAuthenticated } = useAuthStore();
 
   // Form State
   const [email, setEmail] = useState("");
@@ -55,13 +62,13 @@ export default function CheckoutPage() {
   const [companyName, setCompanyName] = useState("");
   const [vatNumber, setVatNumber] = useState("");
 
-  const [fulfillmentType, setFulfillmentType] = useState<
-    "delivery" | "takeaway"
-  >("takeaway");
+  const [fulfillmentType, setFulfillmentType] = useState<"delivery" | "takeaway">(
+    "takeaway",
+  );
   const [selectedStore, setSelectedStore] = useState("loc-1");
 
-  const [country, setCountry] = useState("Saudi Arabia");
-  const [city, setCity] = useState("Riyadh");
+  const [country, setCountry] = useState("India");
+  const [city, setCity] = useState("Kochi");
   const [district, setDistrict] = useState("");
   const [street, setStreet] = useState("");
 
@@ -69,36 +76,104 @@ export default function CheckoutPage() {
     "takeaway_store" | "cod" | "bank"
   >("takeaway_store");
 
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [orderNumber, setOrderNumber] = useState("");
+  const [createdOrderRecord, setCreatedOrderRecord] = useState<OrderRecord | null>(null);
+
+  // Pre-fill user data if logged in
+  useEffect(() => {
+    if (user) {
+      if (user.firstName && !firstName) setFirstName(user.firstName);
+      if (user.lastName && !lastName) setLastName(user.lastName);
+      if (user.email && !email) setEmail(user.email);
+      if (user.companyName && !companyName) {
+        setCompanyName(user.companyName);
+        setIsB2B(true);
+      }
+    }
+  }, [user]);
 
   const subtotal = getTotalPrice();
-  const vatAmount = subtotal * 0.15;
+  const vatAmount = subtotal * 0.18; // 18% GST / Tax
   const shippingFee =
     fulfillmentType === "takeaway"
       ? 0
-      : subtotal >= 499 || subtotal === 0
+      : subtotal >= 5000 || subtotal === 0
         ? 0
-        : 35.0;
+        : 250.0;
   const totalPrice = subtotal + vatAmount + shippingFee;
   const totalItems = getTotalItems();
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
+    if (!isAuthenticated) {
+      setErrorMessage("Please log in or create an account to complete your takeaway order.");
+      return;
+    }
+
     if (!firstName || !phone) {
-      alert("Please fill in all required contact information.");
+      setErrorMessage("Please fill in your contact name and phone number.");
       return;
     }
 
     if (fulfillmentType === "delivery" && !street) {
-      alert("Please fill in your delivery street address.");
+      setErrorMessage("Please fill in your delivery street address.");
       return;
     }
 
-    const randomOrd = "ORD-" + Math.floor(100000 + Math.random() * 900000);
-    setOrderNumber(randomOrd);
-    setOrderPlaced(true);
-    clearCart();
+    if (items.length === 0) {
+      setErrorMessage("Your cart is empty. Please add products before checking out.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const selectedLoc = STORE_LOCATIONS.find((l) => l.id === selectedStore);
+      const storeAddressStr = selectedLoc
+        ? `${selectedLoc.name} - ${selectedLoc.address}`
+        : "Samud Shabkat Main Store";
+
+      const payload: CreateOrderPayload = {
+        companyName: isB2B && companyName ? companyName : undefined,
+        contactPhone: phone,
+        billingAddress:
+          fulfillmentType === "takeaway"
+            ? `Store Pickup: ${storeAddressStr}`
+            : `${street}, ${district}, ${city}, ${country}`,
+        shippingAddress:
+          fulfillmentType === "takeaway"
+            ? `Store Pickup: ${storeAddressStr}`
+            : `${street}, ${district}, ${city}, ${country}`,
+        fulfillmentType:
+          fulfillmentType === "takeaway" ? "STORE_PICKUP" : "HOME_DELIVERY",
+        paymentMethod:
+          fulfillmentType === "takeaway" ? "CASH_ON_PICKUP" : "CASH_ON_DELIVERY",
+        notes: `Customer: ${firstName} ${lastName}. Email: ${email}. ${vatNumber ? `GST/Tax ID: ${vatNumber}.` : ""}`,
+        items: items.map((item) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          sku: item.product.sku || `SKU-${item.product.id.slice(0, 8)}`,
+          unitPrice: Number(item.product.price),
+          quantity: item.quantity,
+          specifications: item.product.specifications || {},
+        })),
+      };
+
+      const res = await ordersApi.createOrder(payload);
+      setCreatedOrderRecord(res);
+      setOrderPlaced(true);
+      clearCart();
+    } catch (err: any) {
+      console.error("Failed to place order:", err);
+      const serverMsg =
+        err?.response?.data?.message || err?.message || "Failed to place order. Please try again.";
+      setErrorMessage(serverMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -114,20 +189,61 @@ export default function CheckoutPage() {
               Samud<span className="text-[#15803d]">Shabkat</span>
             </Link>
             <span className="text-xs font-bold text-slate-400 border-l border-slate-200 pl-2">
-              Order Fulfillment & Takeaway
+              Takeaway & Store Ordering
             </span>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
             <Lock className="w-3.5 h-3.5" />
-            <span>Official ZATCA Invoice Order</span>
+            <span>Official Invoice & Order System</span>
           </div>
         </div>
       </div>
 
       {/* Main Checkout Container */}
       <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 pt-6 sm:pt-8">
-        {orderPlaced ? (
+        {/* Authentication Notice Banner if user is not logged in */}
+        {!isAuthenticated && !orderPlaced && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                <LogIn className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-black text-amber-950 uppercase tracking-wider">
+                  Account Sign In Required
+                </h4>
+                <p className="text-xs font-medium text-amber-800">
+                  Please log in to your Samud Shabkat account to place takeaway orders and receive instant status updates.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/login?redirect=/checkout"
+                className="bg-amber-800 hover:bg-amber-900 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl uppercase tracking-wider transition cursor-pointer"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register?redirect=/checkout"
+                className="bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-extrabold text-xs px-4 py-2.5 rounded-xl uppercase tracking-wider transition cursor-pointer"
+              >
+                Register
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Global Error Banner */}
+        {errorMessage && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3 text-red-800 text-xs font-bold shadow-2xs">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+            <span className="flex-1">{errorMessage}</span>
+          </div>
+        )}
+
+        {orderPlaced && createdOrderRecord ? (
           /* Order Confirmation View */
           <div className="bg-white border border-slate-200/90 rounded-2xl p-8 sm:p-12 text-center space-y-6 shadow-2xs max-w-2xl mx-auto">
             <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto animate-bounce">
@@ -136,62 +252,65 @@ export default function CheckoutPage() {
 
             <div className="space-y-2">
               <span className="text-xs font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-md">
-                Order Received
+                Order Confirmed
               </span>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-950 uppercase tracking-tight">
-                {fulfillmentType === "takeaway"
+                {createdOrderRecord.fulfillmentType === "STORE_PICKUP"
                   ? "Takeaway Order Confirmed!"
                   : "Order Placed Successfully!"}
               </h2>
               <p className="text-xs sm:text-sm font-medium text-slate-600 max-w-md mx-auto">
-                Your order{" "}
+                Order{" "}
                 <strong className="font-extrabold text-slate-950">
-                  {orderNumber}
+                  #{createdOrderRecord.orderNumber}
                 </strong>{" "}
-                has been registered. Our team will contact you via
-                phone/WhatsApp for verification.
+                has been recorded in our system. A confirmation email has been sent to{" "}
+                <strong className="font-extrabold text-slate-950">{email || user?.email}</strong>.
               </p>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2 text-xs">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-left space-y-3 text-xs">
               <div className="flex justify-between font-bold text-slate-700">
-                <span>Fulfillment Mode:</span>
+                <span>Fulfillment Method:</span>
                 <span className="text-emerald-700 font-extrabold uppercase">
-                  {fulfillmentType === "takeaway"
+                  {createdOrderRecord.fulfillmentType === "STORE_PICKUP"
                     ? "Store Pickup (Takeaway)"
-                    : "Express KSA Delivery"}
+                    : "Home Delivery"}
                 </span>
               </div>
-              {fulfillmentType === "takeaway" ? (
+
+              {createdOrderRecord.fulfillmentType === "STORE_PICKUP" ? (
                 <div className="flex justify-between font-bold text-slate-700">
-                  <span>Pickup Location:</span>
-                  <span className="text-slate-950">
+                  <span>Pickup Store Location:</span>
+                  <span className="text-slate-950 font-extrabold">
                     {STORE_LOCATIONS.find((l) => l.id === selectedStore)?.name}
                   </span>
                 </div>
               ) : (
                 <div className="flex justify-between font-bold text-slate-700">
-                  <span>Delivery Address:</span>
-                  <span className="text-slate-950">
-                    {street}, {district}, {city}, KSA
+                  <span>Shipping Address:</span>
+                  <span className="text-slate-950 font-extrabold">
+                    {createdOrderRecord.shippingAddress}
                   </span>
                 </div>
               )}
+
               <div className="flex justify-between font-bold text-slate-700">
                 <span>Payment Method:</span>
                 <span className="text-slate-950 uppercase font-black">
-                  {paymentOption === "takeaway_store"
-                    ? "Pay at Store on Pickup"
-                    : paymentOption === "cod"
+                  {createdOrderRecord.paymentMethod === "CASH_ON_PICKUP"
+                    ? "Pay at Shop Counter"
+                    : createdOrderRecord.paymentMethod === "CASH_ON_DELIVERY"
                       ? "Cash on Delivery"
-                      : "Direct Bank Transfer"}
+                      : "Cash Payment"}
                 </span>
               </div>
-              <div className="flex justify-between font-bold text-slate-700 pt-2 border-t border-slate-200">
-                <span>Total Amount (VAT Included):</span>
-                <span className="text-slate-950 text-sm font-black">
-                  SAR{" "}
-                  {totalPrice.toLocaleString("en-US", {
+
+              <div className="flex justify-between font-bold text-slate-700 pt-3 border-t border-slate-200">
+                <span>Total Payable Amount:</span>
+                <span className="text-emerald-700 text-sm font-black">
+                  ₹{" "}
+                  {Number(createdOrderRecord.totalAmount).toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                   })}
                 </span>
@@ -204,13 +323,13 @@ export default function CheckoutPage() {
                 className="bg-slate-100 hover:bg-slate-200 text-slate-900 font-extrabold text-xs px-5 py-3 rounded-xl uppercase tracking-wider transition inline-flex items-center gap-2 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print ZATCA Invoice Copy</span>
+                <span>Print Invoice Copy</span>
               </button>
               <Link
-                href="/products"
+                href="/my-orders"
                 className="bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition cursor-pointer"
               >
-                Back to Catalog
+                View My Orders
               </Link>
             </div>
           </div>
@@ -252,8 +371,7 @@ export default function CheckoutPage() {
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 font-medium">
-                        Pick up directly from our Riyadh or Jeddah branch. No
-                        shipping fees.
+                        Pick up directly at our shop counter. No shipping fees. Pay cash/card at shop.
                       </p>
                     </div>
                     <span className="text-xs font-black text-emerald-700 bg-white px-2 py-1 rounded border border-emerald-200">
@@ -278,16 +396,15 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-2">
                         <Truck className="w-4 h-4 text-blue-600" />
                         <span className="font-black text-sm uppercase">
-                          Express KSA Delivery
+                          Express Delivery
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 font-medium">
-                        Doorstep courier delivery across Saudi Arabia (1-2
-                        Days).
+                        Doorstep courier delivery to your specified shipping address.
                       </p>
                     </div>
                     <span className="text-xs font-black text-slate-900 bg-white px-2 py-1 rounded border border-slate-200">
-                      {subtotal >= 499 ? "FREE" : "SAR 35"}
+                      {subtotal >= 5000 ? "FREE" : "₹ 250"}
                     </span>
                   </button>
                 </div>
@@ -309,7 +426,7 @@ export default function CheckoutPage() {
                       onChange={(e) => setIsB2B(e.target.checked)}
                       className="w-4 h-4 accent-emerald-600 rounded"
                     />
-                    <span>B2B Corporate Account</span>
+                    <span>Corporate / Company Order</span>
                   </label>
                 </div>
 
@@ -321,7 +438,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       required
-                      placeholder="Fahad"
+                      placeholder="John"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -334,7 +451,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       required
-                      placeholder="Al-Mansoor"
+                      placeholder="Doe"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -347,7 +464,7 @@ export default function CheckoutPage() {
                     <input
                       type="email"
                       required
-                      placeholder="fahad@company.com.sa"
+                      placeholder="john@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -355,12 +472,12 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="font-extrabold text-slate-700 block mb-1">
-                      Saudi Phone / WhatsApp (+966) *
+                      Contact Phone / WhatsApp *
                     </label>
                     <input
                       type="tel"
                       required
-                      placeholder="050 123 4567"
+                      placeholder="+91 98460 00000"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -376,7 +493,7 @@ export default function CheckoutPage() {
                       </label>
                       <input
                         type="text"
-                        placeholder="Saudi Technology Co."
+                        placeholder="Samud Technology Solutions Ltd"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -384,11 +501,11 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <label className="font-extrabold text-slate-700 block mb-1">
-                        ZATCA VAT Tax #
+                        Tax / GST ID
                       </label>
                       <input
                         type="text"
-                        placeholder="310977874800003"
+                        placeholder="GSTIN32AAACG1234F1Z5"
                         value={vatNumber}
                         onChange={(e) => setVatNumber(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -405,7 +522,7 @@ export default function CheckoutPage() {
                     <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
                       3
                     </span>
-                    Select Takeaway Branch Location
+                    Select Store Pickup Location
                   </h3>
 
                   <div className="space-y-3">
@@ -460,11 +577,9 @@ export default function CheckoutPage() {
                         onChange={(e) => setCountry(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none"
                       >
-                        <option value="Saudi Arabia">Saudi Arabia (KSA)</option>
-                        <option value="United Arab Emirates">
-                          United Arab Emirates (UAE)
-                        </option>
-                        <option value="Bahrain">Bahrain</option>
+                        <option value="India">India</option>
+                        <option value="Saudi Arabia">Saudi Arabia</option>
+                        <option value="UAE">United Arab Emirates</option>
                       </select>
                     </div>
                     <div>
@@ -476,7 +591,7 @@ export default function CheckoutPage() {
                         onChange={(e) => setCity(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none"
                       >
-                        {SAUDI_CITIES.map((c) => (
+                        {CITIES.map((c) => (
                           <option key={c} value={c}>
                             {c}
                           </option>
@@ -490,7 +605,7 @@ export default function CheckoutPage() {
                       <input
                         type="text"
                         required
-                        placeholder="Al Olaya"
+                        placeholder="Downtown / Business District"
                         value={district}
                         onChange={(e) => setDistrict(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -503,7 +618,7 @@ export default function CheckoutPage() {
                       <input
                         type="text"
                         required
-                        placeholder="King Fahd Road, Gate 4"
+                        placeholder="Building 4, Tech Park Road"
                         value={street}
                         onChange={(e) => setStreet(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -513,7 +628,7 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Step 4: Payment / Settlement Selection */}
+              {/* Step 4: Payment Selection */}
               <div className="bg-white border border-slate-200/90 rounded-2xl p-6 space-y-4 shadow-2xs">
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-950 flex items-center gap-2 pb-3 border-b border-slate-100">
                   <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
@@ -537,11 +652,10 @@ export default function CheckoutPage() {
                         <Store className="w-5 h-5 text-emerald-700 shrink-0" />
                         <div>
                           <span className="font-extrabold block">
-                            Pay at Store upon Takeaway
+                            Pay at Shop Counter upon Pickup (Takeaway)
                           </span>
                           <span className="text-[11px] text-slate-500 font-medium">
-                            Pay with Cash, Mada, or Credit Card when picking up
-                            your order.
+                            Pay directly with Cash or Card at our shop counter when collecting your products.
                           </span>
                         </div>
                       </div>
@@ -562,39 +676,15 @@ export default function CheckoutPage() {
                         <Banknote className="w-5 h-5 text-emerald-700 shrink-0" />
                         <div>
                           <span className="font-extrabold block">
-                            Payment upon Delivery (COD)
+                            Cash on Delivery (COD)
                           </span>
                           <span className="text-[11px] text-slate-500 font-medium">
-                            Pay the courier upon delivery across KSA.
+                            Pay cash to the delivery courier upon doorstep package delivery.
                           </span>
                         </div>
                       </div>
                     </button>
                   )}
-
-                  {/* Bank Transfer Option */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentOption("bank")}
-                    className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
-                      paymentOption === "bank"
-                        ? "bg-emerald-50 border-emerald-600 text-emerald-950 font-bold"
-                        : "border-slate-200 bg-white hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Building2 className="w-5 h-5 text-blue-700 shrink-0" />
-                      <div>
-                        <span className="font-extrabold block">
-                          Direct Saudi Bank Transfer / Corporate RFQ
-                        </span>
-                        <span className="text-[11px] text-slate-500 font-medium">
-                          Transfer directly to company Al Rajhi or SNB bank
-                          accounts (ZATCA Proforma Invoice issued).
-                        </span>
-                      </div>
-                    </div>
-                  </button>
                 </div>
               </div>
             </div>
@@ -608,22 +698,26 @@ export default function CheckoutPage() {
 
                 {/* Items List */}
                 <div className="space-y-3 max-h-48 overflow-y-auto no-scrollbar">
-                  {items.map((item) => (
-                    <div
-                      key={item.product.id}
-                      className="flex items-center justify-between text-xs font-bold gap-2"
-                    >
-                      <span className="line-clamp-1 flex-1 text-slate-700">
-                        {item.quantity}x {item.product.name}
-                      </span>
-                      <span className="text-slate-950 shrink-0">
-                        SAR{" "}
-                        {(
-                          Number(item.product.price) * item.quantity
-                        ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  ))}
+                  {items.length === 0 ? (
+                    <p className="text-xs text-slate-500 font-medium">No items in cart.</p>
+                  ) : (
+                    items.map((item) => (
+                      <div
+                        key={item.product.id}
+                        className="flex items-center justify-between text-xs font-bold gap-2"
+                      >
+                        <span className="line-clamp-1 flex-1 text-slate-700">
+                          {item.quantity}x {item.product.name}
+                        </span>
+                        <span className="text-slate-950 shrink-0">
+                          ₹{" "}
+                          {(
+                            Number(item.product.price) * item.quantity
+                          ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
 
                 {/* Price Breakdown */}
@@ -631,8 +725,8 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-slate-600">
                     <span>Subtotal</span>
                     <span className="text-slate-950">
-                      SAR{" "}
-                      {subtotal.toLocaleString("en-US", {
+                      ₹{" "}
+                      {subtotal.toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                       })}
                     </span>
@@ -641,21 +735,21 @@ export default function CheckoutPage() {
                     <span>
                       Fulfillment (
                       {fulfillmentType === "takeaway"
-                        ? "Takeaway Pickup"
-                        : "Delivery"}
+                        ? "Store Pickup"
+                        : "Express Delivery"}
                       )
                     </span>
                     <span className="text-slate-950">
                       {shippingFee === 0
                         ? "FREE"
-                        : `SAR ${shippingFee.toFixed(2)}`}
+                        : `₹ ${shippingFee.toFixed(2)}`}
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <span>ZATCA VAT (15%)</span>
+                    <span>Estimated Tax (18%)</span>
                     <span className="text-slate-950">
-                      SAR{" "}
-                      {vatAmount.toLocaleString("en-US", {
+                      ₹{" "}
+                      {vatAmount.toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                       })}
                     </span>
@@ -664,8 +758,8 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-base font-black text-slate-950 pt-3 border-t border-slate-200">
                     <span>Total Amount</span>
                     <span className="text-emerald-700">
-                      SAR{" "}
-                      {totalPrice.toLocaleString("en-US", {
+                      ₹{" "}
+                      {totalPrice.toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                       })}
                     </span>
@@ -675,19 +769,29 @@ export default function CheckoutPage() {
                 {/* Confirm Order CTA */}
                 <button
                   type="submit"
-                  className="w-full bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs py-3.5 rounded-xl uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95"
+                  disabled={submitting || items.length === 0}
+                  className="w-full bg-[#15803d] hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-xs py-3.5 rounded-xl uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95"
                 >
-                  <span>
-                    {fulfillmentType === "takeaway"
-                      ? "Confirm Takeaway Order"
-                      : "Place Order"}
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processing Order...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {fulfillmentType === "takeaway"
+                          ? "Confirm Takeaway Order"
+                          : "Place Order"}
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
 
                 <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-500 pt-1">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Official KSA ZATCA Tax Invoice Included</span>
+                  <span>Official Business Ordering Platform</span>
                 </div>
               </div>
             </div>

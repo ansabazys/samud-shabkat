@@ -25,11 +25,11 @@ export const createOrderSchema = z.object({
   fulfillmentType: z
     .enum(["STORE_PICKUP", "HOME_DELIVERY"])
     .optional()
-    .default("HOME_DELIVERY"),
+    .default("STORE_PICKUP"),
   paymentMethod: z
     .enum(["CASH_ON_DELIVERY", "CASH_ON_PICKUP", "CASH"])
     .optional()
-    .default("CASH_ON_DELIVERY"),
+    .default("CASH_ON_PICKUP"),
   notes: z.string().optional(),
   items: z
     .array(orderItemSchema)

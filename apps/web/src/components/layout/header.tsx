@@ -318,6 +318,12 @@ export function Header() {
               {language === "ar" ? "شركاؤنا" : "Partners"}
             </Link>
             <Link
+              href="/contact"
+              className="px-2 py-1 hover:text-emerald-600 transition-colors whitespace-nowrap font-bold text-emerald-700"
+            >
+              {language === "ar" ? "اتصل بنا" : "Contact Us"}
+            </Link>
+            <Link
               href="/account/orders"
               className="px-2 py-1 hover:text-emerald-600 transition-colors whitespace-nowrap"
             >

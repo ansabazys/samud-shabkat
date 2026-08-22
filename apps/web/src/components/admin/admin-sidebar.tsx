@@ -12,20 +12,20 @@ import {
   Users,
   Settings,
   LogOut,
-  Box,
   ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
-  { name: "Users & Staff", href: "/admin/users", icon: Users },
-  { name: "Stock & Inventory", href: "/admin/inventory", icon: Boxes },
-  { name: "Products", href: "/admin/products", icon: Package },
+  { name: "Order Management", href: "/admin/orders", icon: ShoppingBag },
+  { name: "Product Catalog", href: "/admin/products", icon: Package },
   { name: "Categories", href: "/admin/categories", icon: Layers },
   { name: "Brands", href: "/admin/brands", icon: Tag },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Stock & Inventory", href: "/admin/inventory", icon: Boxes },
+  { name: "Customers & Staff", href: "/admin/users", icon: Users },
+  { name: "Store Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
@@ -33,20 +33,17 @@ export function AdminSidebar() {
   const logout = useAuthStore((state) => state.logout);
 
   return (
-    <aside className="w-64 bg-slate-950 border-r border-slate-800 text-slate-300 flex flex-col justify-between shrink-0 min-h-screen">
+    <aside className="w-64 bg-white border-r border-slate-200/80 text-slate-800 flex flex-col justify-between shrink-0 min-h-screen shadow-2xs">
       <div>
         {/* Brand Header */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-          <Link href="/admin" className="flex items-center gap-3 group">
-            <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 group-hover:border-cyan-400 transition">
-              <Box className="w-5 h-5 text-cyan-400" />
-            </div>
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <Link href="/admin" className="flex items-center gap-2 group">
             <div>
-              <h1 className="text-sm font-extrabold text-white tracking-wider">
-                SAMUD ADMIN
-              </h1>
-              <span className="text-[10px] text-cyan-400 font-mono block">
-                Backoffice Operations
+              <span className="text-lg font-black text-slate-950 uppercase tracking-tight">
+                Samud<span className="text-[#15803d]">Shabkat</span>
+              </span>
+              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase tracking-wider block mt-1 w-fit">
+                Backoffice Admin
               </span>
             </div>
           </Link>
@@ -64,14 +61,14 @@ export function AdminSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
                   isActive
-                    ? "bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 shadow-md shadow-cyan-950/50"
-                    : "text-slate-400 hover:text-white hover:bg-slate-900"
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
                 }`}
               >
                 <Icon
-                  className={`w-4 h-4 ${isActive ? "text-cyan-400" : "text-slate-500"}`}
+                  className={`w-4 h-4 ${isActive ? "text-emerald-700" : "text-slate-400"}`}
                 />
                 {item.name}
               </Link>
@@ -81,22 +78,25 @@ export function AdminSidebar() {
       </div>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-slate-800 space-y-2">
+      <div className="p-4 border-t border-slate-100 space-y-2">
         <Link
           href="/"
           target="_blank"
-          className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 text-xs text-slate-300 font-medium transition"
+          className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-xs text-slate-700 font-bold transition"
         >
-          <span className="flex items-center gap-2">Storefront</span>
-          <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+          <span className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            View Storefront
+          </span>
+          <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
         </Link>
 
         <button
           onClick={logout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 border border-transparent hover:border-rose-500/20 transition"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
         >
-          <LogOut className="w-4 h-4 text-rose-400" />
-          Sign Out
+          <LogOut className="w-4 h-4 text-rose-500" />
+          Sign Out Admin
         </button>
       </div>
     </aside>
