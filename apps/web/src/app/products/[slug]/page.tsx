@@ -243,6 +243,15 @@ export default function ProductDetailsPage({
               <span className="text-slate-400 font-mono text-[11px]">
                 SKU: {product.sku}
               </span>
+              <span
+                className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                  product.inStock
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-rose-50 text-rose-800 border border-rose-200"
+                }`}
+              >
+                {product.inStock ? "In Stock (Available at Counter)" : "Out of Stock"}
+              </span>
             </div>
 
             {/* Title */}

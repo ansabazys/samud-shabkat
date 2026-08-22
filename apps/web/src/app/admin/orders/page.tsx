@@ -357,6 +357,31 @@ export default function AdminOrdersPage() {
             </table>
           </div>
         )}
+
+        {/* Pagination Bar */}
+        {orders.length > 0 && (
+          <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-700">
+            <span>
+              Showing {orders.length} of {total} orders (Page {page} of {Math.ceil(total / 25) || 1})
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 px-3 py-1.5 rounded-xl transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                &larr; Previous
+              </button>
+              <button
+                disabled={page >= (Math.ceil(total / 25) || 1)}
+                onClick={() => setPage((prev) => prev + 1)}
+                className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 px-3 py-1.5 rounded-xl transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next &rarr;
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Order Details & Lifecycle Modal Drawer */}
