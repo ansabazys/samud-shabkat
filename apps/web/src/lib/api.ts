@@ -73,3 +73,65 @@ export interface PaginatedResponse<T> {
   limit: number;
   totalPages: number;
 }
+
+// ── Fetch Helpers ────────────────────────────────────────────────────────────
+
+export interface FetchProductsParams {
+  page?: number;
+  limit?: number;
+  category?: string;
+  brand?: string;
+  search?: string;
+  sort?: "newest" | "price_asc" | "price_desc" | "bestseller";
+  isActive?: boolean;
+}
+
+export async function fetchProducts(
+  params: FetchProductsParams = {}
+): Promise<PaginatedResponse<Product>> {
+  const query = new URLSearchParams();
+  if (params.page) query.set("page", String(params.page));
+  if (params.limit) query.set("limit", String(params.limit));
+  if (params.category) query.set("category", params.category);
+  if (params.brand) query.set("brand", params.brand);
+  if (params.search) query.set("search", params.search);
+  if (params.sort) query.set("sort", params.sort);
+  if (params.isActive !== undefined) query.set("isActive", String(params.isActive));
+
+  const res = await api.get<PaginatedResponse<Product>>(
+    `/products?${query.toString()}`
+  );
+  return res.data;
+}
+
+export async function fetchProductBySlug(
+  slug: string
+): Promise<Product | null> {
+  try {
+    const res = await api.get<Product>(`/products/${slug}`);
+    return res.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchBrands(): Promise<Brand[]> {
+  try {
+    const res = await api.get<PaginatedResponse<Brand>>("/brands?limit=50");
+    return res.data.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  try {
+    const res = await api.get<PaginatedResponse<Category>>(
+      "/categories?limit=50"
+    );
+    return res.data.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
