@@ -206,7 +206,7 @@ export function Header() {
             </div>
           </form>
 
-          {/* Action Icons (User, Wishlist, Cart) */}
+          {/* Action Icons (User, Cart) */}
           <div className="flex items-center gap-4 sm:gap-5 text-slate-700 shrink-0">
             {/* User / Account */}
             <Link
@@ -215,18 +215,6 @@ export function Header() {
               title={isAuthenticated ? user?.firstName || "Account" : "Sign In"}
             >
               <User className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.75]" />
-            </Link>
-
-            {/* Wishlist */}
-            <Link
-              href="/account/wishlist"
-              className="p-1 hover:text-emerald-600 transition-colors relative"
-              title="Wishlist"
-            >
-              <Heart className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.75]" />
-              <span className="absolute -top-1.5 -right-1.5 bg-amber-400 text-slate-950 text-[10px] font-bold min-w-4 h-4 px-1 rounded-full flex items-center justify-center leading-none border border-white shadow-2xs">
-                0
-              </span>
             </Link>
 
             <button
@@ -306,18 +294,6 @@ export function Header() {
               <span>{t.newArrivals}</span>
             </Link>
             <Link
-              href="/about"
-              className="px-2 py-1 hover:text-emerald-600 transition-colors whitespace-nowrap"
-            >
-              {language === "ar" ? "من نحن" : "About Us"}
-            </Link>
-            <Link
-              href="/brands"
-              className="px-2 py-1 hover:text-emerald-600 transition-colors whitespace-nowrap"
-            >
-              {language === "ar" ? "شركاؤنا" : "Partners"}
-            </Link>
-            <Link
               href="/contact"
               className="px-2 py-1 hover:text-emerald-600 transition-colors whitespace-nowrap font-bold text-emerald-700"
             >
@@ -375,47 +351,35 @@ export function Header() {
             </div>
           </form>
 
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-            Navigation
-          </div>
-          <div className="flex flex-col space-y-1 text-sm font-semibold text-slate-800">
+          {/* Nav Links inside Mobile Drawer */}
+          <div className="flex flex-col space-y-2 text-sm font-semibold text-slate-800">
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
               className="p-2 hover:bg-slate-50 rounded-lg"
             >
-              Home
+              {t.home}
             </Link>
             <Link
               href="/products"
               onClick={() => setMobileMenuOpen(false)}
               className="p-2 hover:bg-slate-50 rounded-lg"
             >
-              Products
+              {t.catalog}
             </Link>
             <Link
               href="/new-arrivals"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 hover:bg-slate-50 rounded-lg flex items-center justify-between"
-            >
-              <span>New Arrivals</span>
-              <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-[1px] rounded uppercase">
-                NEW
-              </span>
-            </Link>
-            <Link
-              href="/about"
-              onClick={() => setMobileMenuOpen(false)}
               className="p-2 hover:bg-slate-50 rounded-lg"
             >
-              About Us
+              {t.newArrivals}
             </Link>
             <Link
-              href="/brands"
+              href="/contact"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 hover:bg-slate-50 rounded-lg"
+              className="p-2 hover:bg-slate-50 rounded-lg font-bold text-emerald-700"
             >
-              Partners
+              Contact Us
             </Link>
             <Link
               href="/account/orders"
@@ -426,15 +390,7 @@ export function Header() {
             </Link>
           </div>
 
-          <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs font-medium text-slate-700">
-            <Link
-              href="/account/wishlist"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg"
-            >
-              <Heart className="w-4 h-4 text-red-500" />
-              <span>Wishlist</span>
-            </Link>
+          <div className="border-t border-slate-100 pt-3 flex items-center justify-end text-xs font-medium text-slate-700">
             <Link
               href={isAuthenticated ? "/account" : "/login"}
               onClick={() => setMobileMenuOpen(false)}

@@ -354,21 +354,6 @@ export default function ProductDetailsPage({
                     </>
                   )}
                 </button>
-
-                {/* Wishlist Button */}
-                <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`p-3.5 rounded-xl border transition cursor-pointer ${
-                    isWishlisted
-                      ? "bg-red-50 border-red-200 text-red-600"
-                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                  title="Save to Wishlist"
-                >
-                  <Heart
-                    className={`w-4 h-4 ${isWishlisted ? "fill-red-600" : ""}`}
-                  />
-                </button>
               </div>
 
               {/* Corporate B2B RFQ Button */}
