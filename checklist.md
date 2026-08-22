@@ -96,6 +96,6 @@ This checklist is derived directly from the **E-Commerce Ordering Platform Propo
 
 ## 4. Final Testing & Deployment Deliverables
 
-- [ ] End-to-end checkout flow testing (Customer order placement ➔ Admin notification ➔ Status updates ➔ Payment confirmation).
-- [ ] Role-based access verification (Customer, Administrator, Super Administrator).
+- [x] End-to-end checkout flow testing (Customer order placement ➔ Admin notification ➔ Status updates ➔ Payment confirmation).
+- [x] Role-based access verification (Customer, Administrator, Super Administrator).
 - [ ] VPS Deployment setup & verification (Hostinger VPS, Docker Compose, Nginx, SSL).
