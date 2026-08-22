@@ -105,7 +105,7 @@ export default function CheckoutPage() {
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
       {/* Checkout Header */}
       <div className="bg-white border-b border-slate-200/80 py-4 sm:py-6">
-        <div className="max-w-4/5 mx-auto md:px-0 px-4 flex items-center justify-between">
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link
               href="/"
@@ -126,7 +126,7 @@ export default function CheckoutPage() {
       </div>
 
       {/* Main Checkout Container */}
-      <div className="max-w-4/5 mx-auto md:px-0 px-4 pt-8">
+      <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 pt-6 sm:pt-8">
         {orderPlaced ? (
           /* Order Confirmation View */
           <div className="bg-white border border-slate-200/90 rounded-2xl p-8 sm:p-12 text-center space-y-6 shadow-2xs max-w-2xl mx-auto">

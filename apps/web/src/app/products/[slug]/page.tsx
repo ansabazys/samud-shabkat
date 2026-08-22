@@ -189,7 +189,7 @@ export default function ProductDetailsPage({
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
       {/* Breadcrumb Header */}
       <div className="bg-white border-b border-slate-200/80 py-4">
-        <div className="max-w-4/5 mx-auto md:px-0 px-4 flex items-center gap-2 text-xs font-bold text-slate-500 overflow-x-auto no-scrollbar">
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 flex items-center gap-2 text-xs font-bold text-slate-500 overflow-x-auto no-scrollbar">
           <Link href="/" className="hover:text-emerald-700 transition">
             Home
           </Link>
@@ -215,7 +215,7 @@ export default function ProductDetailsPage({
       </div>
 
       {/* Main Product Container */}
-      <div className="max-w-4/5 mx-auto md:px-0 px-4 pt-8 space-y-10">
+      <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 pt-6 sm:pt-8 space-y-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: Product Gallery (5 cols) */}
           <div className="col-span-12 lg:col-span-6">

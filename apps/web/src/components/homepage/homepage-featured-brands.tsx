@@ -66,7 +66,7 @@ export function HomepageFeaturedBrands() {
   const marqueeBrands = [...BRANDS, ...BRANDS];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-8 sm:py-12 bg-white font-sans overflow-hidden">
+    <section className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 py-8 sm:py-12 bg-white font-sans overflow-hidden">
       {/* Header Row */}
       <div className="flex items-center justify-between pb-3 mb-8">
         <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight uppercase relative inline-block">

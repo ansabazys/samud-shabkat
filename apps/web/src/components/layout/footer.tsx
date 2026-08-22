@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   Mail,
@@ -11,7 +13,7 @@ import {
 export function Footer() {
   return (
     <footer className="w-full bg-[#F4F5F7] border-t border-slate-200/80 font-sans text-slate-900 mt-16 pt-10 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
         {/* Top Feature Guarantee Bar */}
         <div className="bg-white border-2 border-[#FFD400] rounded-2xl p-5 mb-10 shadow-2xs">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">

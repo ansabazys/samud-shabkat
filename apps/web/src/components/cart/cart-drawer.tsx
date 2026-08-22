@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useCartStore } from "@/store/cart-store";
+import { useLanguageStore } from "@/store/language-store";
 import Link from "next/link";
 import {
   X,
@@ -9,8 +11,11 @@ import {
   Plus,
   Minus,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Truck,
+  CheckCircle2,
+  Lock,
 } from "lucide-react";
 
 export function CartDrawer() {
@@ -24,101 +29,162 @@ export function CartDrawer() {
     getTotalItems,
   } = useCartStore();
 
+  const t = useLanguageStore((state) => state.t);
+  const language = useLanguageStore((state) => state.language);
+  const isRtl = language === "ar";
+
+  // Listen for Escape key to close drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isDrawerOpen) {
+        setDrawerOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDrawerOpen, setDrawerOpen]);
+
   if (!isDrawerOpen) return null;
 
   const subtotal = getTotalPrice();
   const vatAmount = subtotal * 0.15;
-  const totalPrice = subtotal + vatAmount;
-  const totalItems = getTotalItems();
   const freeShippingThreshold = 499;
+  const deliveryFee =
+    subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 35.0;
+  const totalPrice = subtotal + vatAmount + (subtotal > 0 ? deliveryFee : 0);
+  const totalItems = getTotalItems();
   const amountForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   const freeShippingPercent = Math.min(
     100,
     (subtotal / freeShippingThreshold) * 100,
   );
 
-  const installmentAmount = (totalPrice / 4).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  const installmentAmount = (totalPrice / 4).toLocaleString(
+    isRtl ? "ar-SA" : "en-US",
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    },
+  );
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden font-sans">
-      {/* Backdrop */}
+      {/* Backdrop with smooth blur */}
       <div
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
         onClick={() => setDrawerOpen(false)}
+        aria-hidden="true"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col">
-          {/* Drawer Header */}
-          <div className="px-6 py-5 bg-slate-900 text-white flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <ShoppingBag className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-base font-black uppercase tracking-wider">
-                Shopping Cart ({totalItems})
-              </h2>
+      {/* Drawer Container (RTL left-aligned, LTR right-aligned) */}
+      <div
+        className={`fixed inset-y-0 ${
+          isRtl ? "left-0 pr-0 sm:pr-10" : "right-0 pl-0 sm:pl-10"
+        } max-w-full flex`}
+      >
+        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col border-l border-slate-200/80">
+          {/* Drawer Header - Clean White Theme Matching Main Header */}
+          <div className="px-6 py-4.5 bg-white text-slate-900 flex items-center justify-between border-b border-slate-200/90">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-wider flex items-center gap-2 text-slate-950">
+                  <span>{t.yourCart}</span>
+                  <span className="bg-amber-400 text-slate-950 text-xs px-2.5 py-0.5 rounded-full font-black shadow-2xs">
+                    {totalItems}
+                  </span>
+                </h2>
+                <span className="text-[11px] text-slate-500 font-bold block">
+                  samud
+                  <span className="text-emerald-600 font-extrabold">.</span>
+                  shabkat KSA
+                </span>
+              </div>
             </div>
             <button
               onClick={() => setDrawerOpen(false)}
-              className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer border border-transparent hover:border-slate-200"
               aria-label="Close Cart Drawer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Free Shipping Progress Indicator */}
-          <div className="bg-emerald-50 border-b border-emerald-200/80 px-6 py-3 space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-bold text-emerald-900">
-              <div className="flex items-center gap-1.5">
+          {/* Free Shipping Progress Bar */}
+          <div className="bg-emerald-50/90 border-b border-emerald-200/80 px-6 py-3.5 space-y-2">
+            <div className="flex items-center justify-between text-xs font-bold text-emerald-950">
+              <div className="flex items-center gap-2">
                 <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
                 {amountForFreeShipping > 0 ? (
                   <span>
-                    Add{" "}
-                    <strong className="font-extrabold text-emerald-950">
-                      SAR {amountForFreeShipping.toFixed(2)}
-                    </strong>{" "}
-                    for Free KSA Delivery
+                    {isRtl ? (
+                      <>
+                        أضف{" "}
+                        <strong className="font-black text-emerald-950">
+                          {amountForFreeShipping.toFixed(2)} {t.currency}
+                        </strong>{" "}
+                        للحصول على شحن سريع مجاني
+                      </>
+                    ) : (
+                      <>
+                        Add{" "}
+                        <strong className="font-black text-emerald-950">
+                          {t.currency} {amountForFreeShipping.toFixed(2)}
+                        </strong>{" "}
+                        for Free KSA Express Delivery
+                      </>
+                    )}
                   </span>
                 ) : (
-                  <span className="font-extrabold text-emerald-950">
-                    🎉 You&apos;ve unlocked Free KSA Express Delivery!
+                  <span className="font-black text-emerald-950 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 inline shrink-0" />
+                    <span>
+                      {isRtl
+                        ? "تم تفعيل الشحن السريع المجاني بكافة المناطق!"
+                        : "Unlocked Free KSA Express Delivery!"}
+                    </span>
                   </span>
                 )}
               </div>
             </div>
-            <div className="w-full h-1.5 bg-emerald-200/80 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-emerald-200/80 rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-600 transition-all duration-500 rounded-full"
+                className="h-full bg-[#15803d] transition-all duration-500 rounded-full"
                 style={{ width: `${freeShippingPercent}%` }}
               />
             </div>
           </div>
 
-          {/* Cart Item List */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Cart Items List */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-3.5 bg-slate-50/40">
             {items.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
-                  <ShoppingBag className="w-8 h-8" />
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12 px-6">
+                <div className="w-20 h-20 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center shadow-2xs">
+                  <ShoppingBag className="w-10 h-10" />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-sm font-black text-slate-900 uppercase">
-                    Your Cart is Empty
+                <div className="space-y-1.5">
+                  <h3 className="text-base font-black text-slate-950 uppercase tracking-tight">
+                    {t.emptyCartMessage}
                   </h3>
-                  <p className="text-xs font-medium text-slate-500 max-w-xs">
-                    Explore our enterprise hardware, laptops, and networking
-                    catalog to add items.
+                  <p className="text-xs font-medium text-slate-500 max-w-xs leading-relaxed">
+                    {isRtl
+                      ? "تصفح أجهزة الشبكات والكمبيوتر ومحطات العمل لإضافة المنتجات إلى سلتك."
+                      : "Explore our enterprise hardware and networking catalog to add products."}
                   </p>
                 </div>
                 <Link
                   href="/products"
                   onClick={() => setDrawerOpen(false)}
-                  className="bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition cursor-pointer"
+                  className="bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3.5 rounded-xl uppercase tracking-wider transition cursor-pointer shadow-xs hover:shadow-md flex items-center gap-2"
                 >
-                  Browse Products
+                  <span>{t.catalog}</span>
+                  {isRtl ? (
+                    <ArrowLeft className="w-4 h-4" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4" />
+                  )}
                 </Link>
               </div>
             ) : (
@@ -126,61 +192,92 @@ export function CartDrawer() {
                 const itemImg =
                   item.product.images?.[0]?.url ||
                   "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=300&auto=format&fit=crop";
+                const itemTotal = Number(item.product.price) * item.quantity;
+
                 return (
                   <div
                     key={item.product.id}
-                    className="flex gap-4 p-3 bg-slate-50 border border-slate-200/90 rounded-2xl relative group"
+                    className="flex gap-4 p-4 bg-white border border-slate-200/90 hover:border-emerald-300 rounded-2xl relative group transition-all duration-200 shadow-2xs hover:shadow-xs"
                   >
-                    <div className="w-20 h-20 rounded-xl bg-white border border-slate-200 p-1.5 shrink-0 overflow-hidden">
+                    {/* Product Image */}
+                    <div className="w-20 h-20 rounded-xl bg-slate-50 border border-slate-200 p-1.5 shrink-0 overflow-hidden">
                       <img
                         src={itemImg}
                         alt={item.product.name}
-                        className="w-full h-full object-cover rounded-lg"
+                        className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
 
-                    <div className="flex-1 space-y-1">
-                      <h4 className="text-xs font-bold text-slate-900 line-clamp-2 leading-snug">
-                        {item.product.name}
-                      </h4>
-                      <span className="text-xs font-black text-slate-950 block">
-                        SAR{" "}
-                        {Number(item.product.price).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </span>
+                    {/* Info & Actions */}
+                    <div className="flex-1 space-y-1.5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider">
+                            {isRtl ? "متوفر" : "In Stock"}
+                          </span>
+                          <button
+                            onClick={() => removeItem(item.product.id)}
+                            className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-lg transition cursor-pointer"
+                            title={isRtl ? "حذف المنتج" : "Remove item"}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <Link
+                          href={`/products/${item.product.id}`}
+                          onClick={() => setDrawerOpen(false)}
+                          className="text-xs font-bold text-slate-900 hover:text-emerald-700 transition line-clamp-2 leading-snug block"
+                        >
+                          {item.product.name}
+                        </Link>
+                      </div>
 
-                      {/* Quantity Controls & Remove */}
                       <div className="flex items-center justify-between pt-1">
-                        <div className="flex items-center border border-slate-200 rounded-lg bg-white p-0.5">
+                        {/* Stepper Quantity Controller */}
+                        <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1 shadow-2xs">
                           <button
                             onClick={() =>
                               updateQuantity(item.product.id, item.quantity - 1)
                             }
-                            className="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition"
+                            className="w-6 h-6 rounded-lg bg-white border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 flex items-center justify-center transition cursor-pointer"
+                            aria-label="Decrease Quantity"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="w-8 text-center text-xs font-black text-slate-900">
+                          <span className="w-7 text-center text-xs font-black text-slate-900">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() =>
                               updateQuantity(item.product.id, item.quantity + 1)
                             }
-                            className="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition"
+                            className="w-6 h-6 rounded-lg bg-white border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 flex items-center justify-center transition cursor-pointer"
+                            aria-label="Increase Quantity"
                           >
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
 
-                        <button
-                          onClick={() => removeItem(item.product.id)}
-                          className="text-slate-400 hover:text-red-600 transition p-1 cursor-pointer"
-                          title="Remove item"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {/* Price Breakdown */}
+                        <div className="text-right">
+                          <span className="text-xs font-black text-slate-950 block">
+                            {itemTotal.toLocaleString(
+                              isRtl ? "ar-SA" : "en-US",
+                              { minimumFractionDigits: 2 },
+                            )}{" "}
+                            {t.currency}
+                          </span>
+                          {item.quantity > 1 && (
+                            <span className="text-[10px] text-slate-400 font-semibold block">
+                              (
+                              {Number(item.product.price).toLocaleString(
+                                isRtl ? "ar-SA" : "en-US",
+                                { minimumFractionDigits: 2 },
+                              )}{" "}
+                              {t.currency} / unit)
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -189,73 +286,144 @@ export function CartDrawer() {
             )}
           </div>
 
-          {/* Drawer Footer (Summary & Checkout Button) */}
+          {/* Drawer Footer Summary */}
           {items.length > 0 && (
-            <div className="p-6 bg-slate-50 border-t border-slate-200/90 space-y-4">
-              {/* Tabby / Tamara Installment Note */}
-              <div className="bg-white border border-emerald-200 p-2.5 rounded-xl text-center text-[11px] font-bold text-emerald-800">
-                <span>
-                  Or 4 payments of{" "}
-                  <strong className="font-extrabold text-emerald-950">
-                    SAR {installmentAmount}
-                  </strong>
-                  /mo with Tabby or Tamara
-                </span>
+            <div className="p-6 bg-white border-t border-slate-200/90 space-y-4 shadow-lg">
+              {/* Tabby & Tamara Installment Estimation Box */}
+              <div className="bg-emerald-50/80 border border-emerald-200/90 p-3 rounded-2xl space-y-1.5">
+                <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="bg-emerald-100 text-emerald-900 font-extrabold px-2 py-0.5 rounded border border-emerald-300/50">
+                      Tabby
+                    </span>
+                    <span className="bg-blue-100 text-blue-900 font-extrabold px-2 py-0.5 rounded border border-blue-300/50">
+                      Tamara
+                    </span>
+                  </div>
+                  <span className="bg-[#15803d] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                    0% Interest
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-emerald-950">
+                  {isRtl ? (
+                    <>
+                      أو 4 دفعات بدون فوائد بقيمة{" "}
+                      <strong className="font-black text-emerald-900">
+                        {installmentAmount} {t.currency}
+                      </strong>{" "}
+                      /شهر
+                    </>
+                  ) : (
+                    <>
+                      Or 4 interest-free payments of{" "}
+                      <strong className="font-black text-emerald-900">
+                        {t.currency} {installmentAmount}
+                      </strong>
+                      /mo
+                    </>
+                  )}
+                </p>
               </div>
 
-              {/* Subtotal & Taxes */}
-              <div className="space-y-1.5 text-xs">
+              {/* Price Breakdown Details */}
+              <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-slate-600 font-medium">
-                  <span>Subtotal (Excl. VAT)</span>
+                  <span>{t.subtotal}</span>
                   <span className="font-extrabold text-slate-900">
-                    SAR{" "}
-                    {subtotal.toLocaleString("en-US", {
+                    {subtotal.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                       minimumFractionDigits: 2,
-                    })}
+                    })}{" "}
+                    {t.currency}
                   </span>
                 </div>
+
                 <div className="flex justify-between text-slate-600 font-medium">
-                  <span>VAT (15%)</span>
-                  <span className="font-extrabold text-slate-900">
-                    SAR{" "}
-                    {vatAmount.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                    })}
+                  <span>{isRtl ? "الشحن المتوقع" : "Estimated Shipping"}</span>
+                  <span>
+                    {deliveryFee === 0 ? (
+                      <strong className="text-emerald-700 font-black">
+                        {isRtl ? "مجاني" : "FREE"}
+                      </strong>
+                    ) : (
+                      <strong className="text-slate-900 font-extrabold">
+                        {deliveryFee.toFixed(2)} {t.currency}
+                      </strong>
+                    )}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm font-black text-slate-950 pt-2 border-t border-slate-200">
-                  <span>Total Amount</span>
+
+                <div className="flex justify-between text-slate-600 font-medium">
+                  <span>{t.vatTaxIncluded}</span>
+                  <span className="font-extrabold text-slate-900">
+                    {vatAmount.toLocaleString(isRtl ? "ar-SA" : "en-US", {
+                      minimumFractionDigits: 2,
+                    })}{" "}
+                    {t.currency}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-base font-black text-slate-950 pt-2.5 border-t border-slate-200">
+                  <span>{isRtl ? "المجموع الكلي" : "Total Amount"}</span>
                   <span className="text-emerald-700">
-                    SAR{" "}
-                    {totalPrice.toLocaleString("en-US", {
+                    {totalPrice.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                       minimumFractionDigits: 2,
-                    })}
+                    })}{" "}
+                    {t.currency}
                   </span>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-2">
+              {/* Action CTA Buttons */}
+              <div className="space-y-2 pt-1">
                 <Link
                   href="/checkout"
                   onClick={() => setDrawerOpen(false)}
-                  className="w-full bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs py-3.5 rounded-xl uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  className="w-full bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm py-3.5 rounded-xl uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md active:scale-[0.99]"
                 >
-                  <span>Proceed to Checkout</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>{t.proceedToCheckout}</span>
+                  {isRtl ? (
+                    <ArrowLeft className="w-4 h-4" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4" />
+                  )}
                 </Link>
+
                 <Link
                   href="/cart"
                   onClick={() => setDrawerOpen(false)}
-                  className="w-full bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-extrabold text-xs py-3 rounded-xl uppercase tracking-wider transition flex items-center justify-center cursor-pointer"
+                  className="w-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-extrabold text-xs py-3 rounded-xl uppercase tracking-wider transition flex items-center justify-center cursor-pointer hover:border-slate-300 shadow-2xs"
                 >
-                  View Full Cart Page
+                  {isRtl ? "عرض صفحة السلة الكاملة" : "View Full Cart Page"}
                 </Link>
               </div>
 
-              <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider pt-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>ZATCA VAT Invoice & Official Agency Warranty</span>
+              {/* Accepted KSA Payment Methods */}
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <div className="flex items-center justify-center gap-1.5 flex-wrap text-[10px] font-extrabold text-slate-600">
+                  <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    Mada
+                  </span>
+                  <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    Apple Pay
+                  </span>
+                  <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    Visa / MC
+                  </span>
+                  <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">
+                    Tabby
+                  </span>
+                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-200">
+                    Tamara
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{t.zatcaVatInvoice}</span>
+                  <span>•</span>
+                  <Lock className="w-3 h-3 text-slate-400 inline" />
+                  <span>SSL</span>
+                </div>
               </div>
             </div>
           )}

@@ -131,7 +131,7 @@ export function HomepageProductShowcase() {
   ).slice(0, 6);
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-8 sm:py-12 bg-white">
+    <section className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 py-8 sm:py-12 bg-white">
       {/* Tab Navigation & Carousel Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-3 mb-6">
         {/* Left Category Tabs */}

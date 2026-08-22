@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguageStore } from "@/store/language-store";
 import {
   Network,
   Laptop,
@@ -59,12 +60,14 @@ const CATEGORIES = [
 ];
 
 export function HomepageShopByCategory() {
+  const t = useLanguageStore((state) => state.t);
+
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-8 sm:py-12 bg-white">
+    <section className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 py-8 sm:py-12 bg-white">
       {/* Header Row */}
       <div className="flex items-center justify-between pb-3 mb-8">
         <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight uppercase relative inline-block">
-          Shop By Category
+          {t.shopByCategoryTitle}
           <span className="absolute bottom-[-13px] left-0 w-full h-[3px] bg-[#FFD400] rounded-full" />
         </h2>
 

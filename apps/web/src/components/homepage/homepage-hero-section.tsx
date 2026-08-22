@@ -5,7 +5,7 @@ import Link from "next/link";
 export function HomepageHeroSection() {
   return (
     <div className="w-full bg-white text-slate-900 pb-12">
-      <div className="max-w-7xl mx-auto md:px-0 px-5 space-y-6 pt-4 sm:pt-6">
+      <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 space-y-6 pt-4 sm:pt-6">
         {/* 1. Main Hero Banner */}
         <div className="bg-[#F2F3F5] md:h-[600px] h-[300px] rounded-lg p-8 sm:p-12 lg:p-16 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 border border-slate-200/80 shadow-2xs"></div>
 

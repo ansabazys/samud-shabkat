@@ -65,7 +65,7 @@ export default function ProfilePage() {
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
       {/* Breadcrumbs Header */}
       <div className="bg-white border-b border-slate-200/80 py-6 sm:py-8">
-        <div className="max-w-4/5 mx-auto md:px-0 px-4">
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
             <Link href="/" className="hover:text-emerald-700 transition">
               Home
@@ -96,7 +96,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Body Container */}
-      <div className="max-w-4/5 mx-auto md:px-0 px-4 pt-8">
+      <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 pt-6 sm:pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Navigation Sidebar (3 cols) */}
           <div className="col-span-12 lg:col-span-3 bg-white border border-slate-200/90 rounded-2xl p-3 space-y-1 shadow-2xs">

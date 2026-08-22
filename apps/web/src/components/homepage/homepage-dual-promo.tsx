@@ -5,7 +5,7 @@ import { ArrowRight, Server, Laptop } from "lucide-react";
 
 export function HomepageDualPromo() {
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-8 sm:py-10 bg-white font-sans">
+    <section className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 py-8 sm:py-10 bg-white font-sans">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Banner 1: Enterprise Networking */}
         <Link

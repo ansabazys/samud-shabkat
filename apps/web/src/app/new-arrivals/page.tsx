@@ -379,7 +379,7 @@ export default function NewArrivalsPage() {
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
       {/* Top Breadcrumb Navigation */}
       <div className="bg-white border-b border-slate-200/80 py-3.5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
             <Link href="/" className="hover:text-emerald-700 transition">
               Home
@@ -400,7 +400,7 @@ export default function NewArrivalsPage() {
       </div>
 
       {/* 2. Main Catalog Body with Sidebar Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 pt-6 sm:pt-8 space-y-6">
         {/* Title Header with Signature Yellow Accent */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200/80">
           <div>
@@ -631,7 +631,7 @@ export default function NewArrivalsPage() {
       </div>
 
       {/* 3. New Release Stock Notification Alert Bar */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+      <section className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 mt-12 sm:mt-16">
         <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-10 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider inline-block">

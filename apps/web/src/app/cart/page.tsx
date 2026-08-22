@@ -68,7 +68,7 @@ export default function CartPage() {
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
       {/* Breadcrumbs Header */}
       <div className="bg-white border-b border-slate-200/80 py-6 sm:py-8">
-        <div className="max-w-4/5 mx-auto md:px-0 px-4">
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
             <Link href="/" className="hover:text-emerald-700 transition">
               Home
@@ -93,7 +93,7 @@ export default function CartPage() {
       </div>
 
       {/* Main Cart Body */}
-      <div className="max-w-4/5 mx-auto md:px-0 px-4 pt-8">
+      <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 pt-6 sm:pt-8">
         {items.length === 0 ? (
           <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-5 shadow-2xs max-w-lg mx-auto">
             <div className="w-20 h-20 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
