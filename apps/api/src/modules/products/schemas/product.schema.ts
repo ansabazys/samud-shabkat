@@ -10,11 +10,12 @@ export const createProductSchema = z.object({
   brandId: z.string().uuid("Invalid brand ID"),
   specifications: z.record(z.unknown()).optional().default({}),
   isActive: z.boolean().optional().default(true),
+  initialStock: z.coerce.number().int().nonnegative().optional().default(50),
   images: z
     .array(
       z.object({
-        url: z.string().url("Invalid image URL"),
-        storageKey: z.string().min(1, "Storage key is required"),
+        url: z.string().min(1, "Image URL is required"),
+        storageKey: z.string().optional().default("direct-upload"),
         altText: z.string().optional(),
         sortOrder: z.number().int().optional().default(0),
         isPrimary: z.boolean().optional().default(false),
@@ -42,12 +43,12 @@ export const productQuerySchema = z.object({
 });
 
 export const productParamsSchema = z.object({
-  id: z.string().uuid("Invalid product ID format"),
+  id: z.string().min(1, "Product identifier is required"),
 });
 
 export const addProductImageSchema = z.object({
-  url: z.string().url("Invalid image URL"),
-  storageKey: z.string().min(1, "Storage key is required"),
+  url: z.string().min(1, "Image URL is required"),
+  storageKey: z.string().optional().default("direct-upload"),
   altText: z.string().optional(),
   sortOrder: z.number().int().optional().default(0),
   isPrimary: z.boolean().optional().default(false),

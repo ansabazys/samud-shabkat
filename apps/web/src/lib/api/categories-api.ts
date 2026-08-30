@@ -1,4 +1,5 @@
 import { api, type Category, type PaginatedResponse } from "../api";
+import { clientCache } from "../cache-client";
 
 export interface CategoryQueryParams {
   page?: number;
@@ -27,37 +28,45 @@ export interface UpdateCategoryInput {
 
 export const categoriesApi = {
   async getCategories(params?: CategoryQueryParams): Promise<PaginatedResponse<Category>> {
-    const res = await api.get<{
-      success: boolean;
-      data: PaginatedResponse<Category>;
-    }>("/categories", { params });
-    return res.data.data;
+    const res = await api.get<any>("/categories", { params });
+    const payload = res.data?.data ?? res.data;
+    if (Array.isArray(payload)) {
+      return {
+        data: payload,
+        total: payload.length,
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+        totalPages: 1,
+      };
+    }
+    return {
+      data: Array.isArray(payload?.data) ? payload.data : [],
+      total: payload?.total ?? (Array.isArray(payload?.data) ? payload.data.length : 0),
+      page: payload?.page ?? 1,
+      limit: payload?.limit ?? 20,
+      totalPages: payload?.totalPages ?? 1,
+    };
   },
 
   async getCategoryById(id: string): Promise<Category> {
-    const res = await api.get<{ success: boolean; data: Category }>(
-      `/categories/${id}`,
-    );
-    return res.data.data;
+    const res = await api.get<any>(`/categories/${id}`);
+    return res.data?.data ?? res.data;
   },
 
   async createCategory(input: CreateCategoryInput): Promise<Category> {
-    const res = await api.post<{ success: boolean; data: Category }>(
-      "/categories",
-      input,
-    );
-    return res.data.data;
+    const res = await api.post<any>("/categories", input);
+    clientCache.invalidate();
+    return res.data?.data ?? res.data;
   },
 
   async updateCategory(id: string, input: UpdateCategoryInput): Promise<Category> {
-    const res = await api.put<{ success: boolean; data: Category }>(
-      `/categories/${id}`,
-      input,
-    );
-    return res.data.data;
+    const res = await api.put<any>(`/categories/${id}`, input);
+    clientCache.invalidate();
+    return res.data?.data ?? res.data;
   },
 
   async deleteCategory(id: string): Promise<void> {
     await api.delete(`/categories/${id}`);
+    clientCache.invalidate();
   },
 };

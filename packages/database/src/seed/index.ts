@@ -102,7 +102,7 @@ async function seed() {
     const adminEmail = "admin@samudshabkat.com";
     // Pre-computed Argon2 hash for secure local setup ("SuperAdmin123!")
     const passwordHash =
-      "$argon2id$v=19$m=65536,t=3,p=4$VDR2N2E0Y3o2c0oxM2psVQ$y1Zf4rQJj2vKkV8Yf/93P39y+L4O+Wd+Z9hU6uCgHlU";
+      "$argon2id$v=19$m=65536,t=3,p=4$PAZP3haKJpvDVRoZXMAIPw$1HoMne4ycfWitMT4XyALAFjhNCnHq2OKRBDYQjh4C28";
     await db
       .insert(users)
       .values({

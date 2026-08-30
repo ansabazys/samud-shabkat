@@ -1,5 +1,5 @@
 export { authRoutes } from "./routes/auth.routes.js";
-export { authenticate } from "./middleware/auth.middleware.js";
+export { authenticate, optionalAuthenticate } from "./middleware/auth.middleware.js";
 export type {
   UserResponse,
   AuthResponse,

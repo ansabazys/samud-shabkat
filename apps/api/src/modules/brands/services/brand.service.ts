@@ -1,5 +1,6 @@
 import { brandRepository } from "../repositories/brand.repository.js";
 import { slugify } from "../../../common/utils.js";
+import { cacheService } from "../../cache/cache.service.js";
 import type {
   CreateBrandInput,
   UpdateBrandInput,
@@ -8,17 +9,29 @@ import type {
 
 export class BrandService {
   async getBrands(params: BrandQueryParams) {
-    return brandRepository.findAll(params);
+    const cacheKey = `brands:list:${JSON.stringify(params)}`;
+    return cacheService.getOrSet(
+      cacheKey,
+      () => brandRepository.findAll(params),
+      600, // 10 mins TTL
+    );
   }
 
   async getBrandById(id: string) {
-    const brand = await brandRepository.findById(id);
-    if (!brand) {
-      const error = new Error("Brand not found");
-      Object.assign(error, { statusCode: 404 });
-      throw error;
-    }
-    return brand;
+    const cacheKey = `brands:detail:${id}`;
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const brand = await brandRepository.findById(id);
+        if (!brand) {
+          const error = new Error("Brand not found");
+          Object.assign(error, { statusCode: 404 });
+          throw error;
+        }
+        return brand;
+      },
+      600,
+    );
   }
 
   async createBrand(input: CreateBrandInput) {
@@ -29,10 +42,13 @@ export class BrandService {
       slug = `${slug}-${Date.now().toString(36)}`;
     }
 
-    return brandRepository.create({
+    const created = await brandRepository.create({
       ...input,
       slug,
     });
+
+    cacheService.invalidateCatalog();
+    return created;
   }
 
   async updateBrand(id: string, input: UpdateBrandInput) {
@@ -47,15 +63,19 @@ export class BrandService {
       }
     }
 
-    return brandRepository.update(id, {
+    const updated = await brandRepository.update(id, {
       ...input,
       ...(slug ? { slug } : {}),
     });
+
+    cacheService.invalidateCatalog();
+    return updated;
   }
 
   async deleteBrand(id: string) {
     await this.getBrandById(id);
     await brandRepository.softDelete(id);
+    cacheService.invalidateCatalog();
     return { message: "Brand deleted successfully" };
   }
 }

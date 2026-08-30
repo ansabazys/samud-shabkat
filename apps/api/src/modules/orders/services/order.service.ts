@@ -1,3 +1,5 @@
+import { users, roles, userRoles } from "@samud/database";
+import { eq } from "drizzle-orm";
 import { orderRepository } from "../repositories/order.repository.js";
 import { inventoryService } from "../../inventory/services/inventory.service.js";
 import { inventoryRepository } from "../../inventory/repositories/inventory.repository.js";
@@ -12,6 +14,51 @@ import type {
 } from "../schemas/order.schema.js";
 
 export class OrderService {
+  async findOrCreateGuestUser(email: string, fullName: string, phone?: string) {
+    const database = getDb();
+    const cleanEmail = email.trim().toLowerCase();
+    const [existing] = await database
+      .select()
+      .from(users)
+      .where(eq(users.email, cleanEmail))
+      .limit(1);
+
+    if (existing) {
+      return existing;
+    }
+
+    const parts = fullName.trim().split(" ");
+    const firstName = parts[0] || "Guest";
+    const lastName = parts.slice(1).join(" ") || "Customer";
+
+    const [newUser] = await database
+      .insert(users)
+      .values({
+        email: cleanEmail,
+        passwordHash: "$argon2id$v=19$m=65536,t=3,p=4$GUEST$ACCOUNT",
+        firstName,
+        lastName,
+        isActive: true,
+      })
+      .returning();
+
+    // Assign customer role
+    const [customerRole] = await database
+      .select()
+      .from(roles)
+      .where(eq(roles.name, "CUSTOMER"))
+      .limit(1);
+
+    if (customerRole && newUser) {
+      await database.insert(userRoles).values({
+        userId: newUser.id,
+        roleId: customerRole.id,
+      });
+    }
+
+    return newUser;
+  }
+
   async getAllOrders(params: OrderQueryParams) {
     return orderRepository.findAll(params);
   }

@@ -19,7 +19,7 @@ export class AuthService {
     this.jwtService = new JwtService(app);
   }
 
-  async register(input: RegisterInput): Promise<{ message: string }> {
+  async register(input: RegisterInput): Promise<AuthResponse> {
     const existing = await authRepository.findByEmail(input.email);
     if (existing) {
       const error = new Error("Account with this email already exists");
@@ -28,7 +28,7 @@ export class AuthService {
     }
 
     const passwordHash = await passwordService.hash(input.password);
-    await authRepository.createUserWithProfile(input, passwordHash);
+    const user = await authRepository.createUserWithProfile(input, passwordHash);
 
     // Trigger welcome notification in background
     notificationService
@@ -39,7 +39,21 @@ export class AuthService {
       })
       .catch((err) => console.error("[AuthService] Welcome email error:", err));
 
-    return { message: "User registered successfully" };
+    const accessToken = this.jwtService.generateAccessToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      permissionsVersion: AUTH_CONSTANTS.DEFAULT_PERMISSIONS_VERSION,
+    });
+
+    const refreshToken = tokenService.generateRefreshToken();
+    await tokenService.saveRefreshToken(user.id, refreshToken);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: formatUserResponse(user),
+    };
   }
 
   async login(input: LoginInput): Promise<AuthResponse> {

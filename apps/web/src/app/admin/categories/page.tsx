@@ -64,10 +64,12 @@ export default function AdminCategoriesPage() {
       };
 
       const res = await categoriesApi.getCategories(params);
-      setCategories(res.data);
-      setTotal(res.total);
+      const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setCategories(items);
+      setTotal(typeof res?.total === "number" ? res.total : items.length);
     } catch (err: any) {
       console.error("Failed to load categories:", err);
+      setCategories([]);
       setError(
         err?.response?.data?.message || err?.message || "Failed to load category list.",
       );
@@ -295,7 +297,7 @@ export default function AdminCategoriesPage() {
             <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
             <span className="text-xs text-slate-500 font-medium">Loading categories database...</span>
           </div>
-        ) : categories.length === 0 ? (
+        ) : (categories || []).length === 0 ? (
           <div className="py-16 text-center text-xs text-slate-500 font-medium">
             No categories found.
           </div>
@@ -311,7 +313,7 @@ export default function AdminCategoriesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
-                {categories.map((c) => (
+                {(categories || []).map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50 transition">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">

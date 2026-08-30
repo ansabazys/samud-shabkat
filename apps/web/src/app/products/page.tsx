@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -10,244 +10,139 @@ import {
   X,
   PackageSearch,
   ArrowUpDown,
+  Loader2,
 } from "lucide-react";
-import { ProductCard, ProductItem } from "@/components/products/product-card";
-import { ProductFilters } from "@/components/products/product-filters";
-
-const CATALOG_PRODUCTS: ProductItem[] = [
-  {
-    id: "cat-prod-1",
-    name: "Cisco Catalyst 9300 48-Port Managed PoE+ Switch (740W)",
-    category: "Networking",
-    brand: "Cisco",
-    tag: "48-Port PoE+",
-    discount: "-12%",
-    badge: "ENTERPRISE",
-    rating: 5,
-    reviewsCount: 46,
-    price: 4250.0,
-    originalPrice: 4850.0,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop",
-    specs: ["48-Port Gigabit", "740W PoE+", "StackWise-480"],
-  },
-  {
-    id: "cat-prod-2",
-    name: "Ubiquiti UniFi Dream Machine Pro Security Gateway",
-    category: "Networking",
-    brand: "Ubiquiti",
-    tag: "Security Gateway",
-    discount: "-10%",
-    badge: "TOP SELLER",
-    rating: 5,
-    reviewsCount: 64,
-    price: 1950.0,
-    originalPrice: 2200.0,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1543512214-318c7553f230?w=600&auto=format&fit=crop",
-    specs: ["10G SFP+ WAN", "Built-in NVR", "UniFi OS"],
-  },
-  {
-    id: "cat-prod-3",
-    name: 'Apple MacBook Pro 16" M3 Max 36GB / 1TB SSD Space Black',
-    category: "Computers",
-    brand: "Apple",
-    tag: "M3 Max Chip",
-    discount: "-8%",
-    badge: "PRO RIG",
-    rating: 5,
-    reviewsCount: 58,
-    price: 12499.0,
-    originalPrice: 13500.0,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop",
-    specs: ["M3 Max 16-Core", "36GB RAM", '16.2" Liquid Retina'],
-  },
-  {
-    id: "cat-prod-4",
-    name: "Synology DiskStation DS1823xs+ 8-Bay Enterprise NAS",
-    category: "Storage & NAS",
-    brand: "Synology",
-    tag: "8-Bay RAID",
-    discount: undefined,
-    badge: "STORAGE",
-    rating: 5,
-    reviewsCount: 31,
-    price: 6450.0,
-    originalPrice: undefined,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&auto=format&fit=crop",
-    specs: ["AMD Ryzen V1780B", "10GbE Built-in", "ECC RAM"],
-  },
-  {
-    id: "cat-prod-5",
-    name: "NVIDIA GeForce RTX 4090 24GB GDDR6X Gaming GPU",
-    category: "Components",
-    brand: "NVIDIA",
-    tag: "24GB GDDR6X",
-    discount: "-7%",
-    badge: "FLAGSHIP",
-    rating: 5,
-    reviewsCount: 72,
-    price: 8450.0,
-    originalPrice: 9100.0,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop",
-    specs: ["Ada Lovelace", "DLSS 3", "24GB VRAM"],
-  },
-  {
-    id: "cat-prod-6",
-    name: 'Asus ROG Swift 32" OLED 240Hz 4K Gaming Monitor',
-    category: "Monitors",
-    brand: "ASUS",
-    tag: "4K OLED 0.03ms",
-    discount: "-12%",
-    badge: "NEW RELEASE",
-    rating: 5,
-    reviewsCount: 45,
-    price: 4250.0,
-    originalPrice: 4800.0,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&auto=format&fit=crop",
-    specs: ['32" 4K QD-OLED', "240Hz Refresh", "G-Sync Compatible"],
-  },
-  {
-    id: "cat-prod-7",
-    name: "Dell Precision 5680 Workstation i9-13900H / 64GB RAM",
-    category: "Computers",
-    brand: "Dell",
-    tag: "Pro Workstation",
-    discount: undefined,
-    badge: "PRO RIG",
-    rating: 5,
-    reviewsCount: 22,
-    price: 11200.0,
-    originalPrice: undefined,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=600&auto=format&fit=crop",
-    specs: ["i9-13900H", "NVIDIA RTX 3500", "64GB DDR5"],
-  },
-  {
-    id: "cat-prod-8",
-    name: "Logitech MX Keys S Wireless Illumination Keyboard",
-    category: "Accessories",
-    brand: "Logitech",
-    tag: "Smart Illumination",
-    discount: "-15%",
-    badge: "TOP SELLER",
-    rating: 5,
-    reviewsCount: 94,
-    price: 480.0,
-    originalPrice: 565.0,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&auto=format&fit=crop",
-    specs: ["Logi Bolt USB", "Bluetooth LE", "Smart Backlight"],
-  },
-];
-
-const CATEGORIES_SUMMARY = [
-  { id: "cat-1", name: "Networking", count: 24 },
-  { id: "cat-2", name: "Computers", count: 32 },
-  { id: "cat-3", name: "Storage & NAS", count: 18 },
-  { id: "cat-4", name: "Components", count: 45 },
-  { id: "cat-5", name: "Monitors", count: 16 },
-  { id: "cat-6", name: "Accessories", count: 28 },
-];
-
-const BRANDS_SUMMARY = [
-  { id: "b-1", name: "Cisco", count: 18 },
-  { id: "b-2", name: "Ubiquiti", count: 14 },
-  { id: "b-3", name: "Apple", count: 22 },
-  { id: "b-4", name: "Synology", count: 12 },
-  { id: "b-5", name: "NVIDIA", count: 20 },
-  { id: "b-6", name: "Dell", count: 16 },
-  { id: "b-7", name: "ASUS", count: 25 },
-];
+import { ProductCard, type ProductItem } from "@/components/products/product-card";
+import { ProductFilters, type FilterState } from "@/components/products/product-filters";
+import { fetchProducts, fetchCategories, fetchBrands, type Product, type Category, type Brand } from "@/lib/api";
 
 export default function ProductsPage() {
-  const [layoutMode, setLayoutMode] = useState<"grid" | "list">("grid");
-  const [sortBy, setSortBy] = useState<string>("featured");
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [layout, setLayout] = useState<"grid" | "list">("grid");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
-  const [filters, setFilters] = useState({
-    search: "",
+  // Filters State
+  const [filters, setFilters] = useState<FilterState>({
     category: "",
     brand: "",
     minPrice: "",
     maxPrice: "",
     inStockOnly: false,
     onSaleOnly: false,
+    search: "",
   });
+
+  const [sortBy, setSortBy] = useState<string>("newest");
+
+  // Load initial categories & brands
+  useEffect(() => {
+    Promise.all([fetchCategories(), fetchBrands()])
+      .then(([cats, brds]) => {
+        setCategories(Array.isArray(cats) ? cats : []);
+        setBrands(Array.isArray(brds) ? brds : []);
+      })
+      .catch((err) => console.error("Error loading categories/brands:", err));
+  }, []);
+
+  // Load live products from backend
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await fetchProducts({
+        limit: 50,
+        search: filters.search || undefined,
+        category: filters.category || undefined,
+        brand: filters.brand || undefined,
+        isActive: true,
+      });
+
+      const list = Array.isArray(res?.data) ? res.data : [];
+      setProducts(list);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, [filters.category, filters.brand, filters.search]);
+
+  // Client-side transform for ProductCard compatibility
+  const productItems: ProductItem[] = useMemo(() => {
+    return products.map((p) => {
+      const primaryImage =
+        p.images?.find((img) => img.isPrimary)?.url ||
+        p.images?.[0]?.url ||
+        "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop";
+
+      const priceNum = typeof p.price === "string" ? parseFloat(p.price) : p.price || 0;
+
+      let specList: string[] = [];
+      if (p.specifications && typeof p.specifications === "object") {
+        specList = Object.entries(p.specifications)
+          .filter(([_, v]) => v)
+          .map(([k, v]) => `${k}: ${v}`)
+          .slice(0, 3);
+      }
+
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        sku: p.sku,
+        category: p.category?.name || "Hardware",
+        categoryId: p.categoryId,
+        brand: p.brand?.name || "General",
+        brandId: p.brandId,
+        rating: 5,
+        reviewsCount: 18,
+        price: priceNum,
+        inStock: p.isActive,
+        image: primaryImage,
+        specs: specList,
+      };
+    });
+  }, [products]);
+
+  // Client-side Price Filtering and Sorting
+  const filteredProducts = useMemo(() => {
+    return productItems
+      .filter((product) => {
+        if (filters.minPrice && product.price < parseFloat(filters.minPrice)) {
+          return false;
+        }
+        if (filters.maxPrice && product.price > parseFloat(filters.maxPrice)) {
+          return false;
+        }
+        if (filters.inStockOnly && !product.inStock) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price-low" || sortBy === "price_asc") return a.price - b.price;
+        if (sortBy === "price-high" || sortBy === "price_desc") return b.price - a.price;
+        return 0;
+      });
+  }, [productItems, filters.minPrice, filters.maxPrice, filters.inStockOnly, sortBy]);
 
   const handleResetFilters = () => {
     setFilters({
-      search: "",
       category: "",
       brand: "",
       minPrice: "",
       maxPrice: "",
       inStockOnly: false,
       onSaleOnly: false,
+      search: "",
     });
   };
-
-  // Filter & Sort Logic
-  const filteredProducts = useMemo(() => {
-    return CATALOG_PRODUCTS.filter((product) => {
-      // Search
-      if (
-        filters.search &&
-        !product.name.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !product.brand.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !product.category.toLowerCase().includes(filters.search.toLowerCase())
-      ) {
-        return false;
-      }
-      // Category
-      if (
-        filters.category &&
-        product.category.toLowerCase() !== filters.category.toLowerCase()
-      ) {
-        return false;
-      }
-      // Brand
-      if (
-        filters.brand &&
-        product.brand.toLowerCase() !== filters.brand.toLowerCase()
-      ) {
-        return false;
-      }
-      // Price
-      if (filters.minPrice && product.price < parseFloat(filters.minPrice)) {
-        return false;
-      }
-      if (filters.maxPrice && product.price > parseFloat(filters.maxPrice)) {
-        return false;
-      }
-      // In Stock
-      if (filters.inStockOnly && !product.inStock) {
-        return false;
-      }
-      // On Sale
-      if (filters.onSaleOnly && !product.discount) {
-        return false;
-      }
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === "price-low") return a.price - b.price;
-      if (sortBy === "price-high") return b.price - a.price;
-      if (sortBy === "rating") return b.rating - a.rating;
-      return 0; // Default featured
-    });
-  }, [filters, sortBy]);
 
   const activeFilterCount = [
     filters.search,
@@ -269,9 +164,7 @@ export default function ProductsPage() {
               Home
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-900 font-extrabold">
-              Hardware Catalog
-            </span>
+            <span className="text-slate-900 font-extrabold">Hardware Catalog</span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -280,8 +173,7 @@ export default function ProductsPage() {
                 All Products & Hardware
               </h1>
               <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                Explore enterprise networking, pro workstations, NAS storage,
-                and PC components.
+                Explore enterprise networking, pro workstations, NAS storage, and PC components.
               </p>
             </div>
 
@@ -301,139 +193,165 @@ export default function ProductsPage() {
               filters={filters}
               onFilterChange={setFilters}
               onResetFilters={handleResetFilters}
-              categories={CATEGORIES_SUMMARY}
-              brands={BRANDS_SUMMARY}
+              categories={categories}
+              brands={brands}
             />
           </div>
 
-          {/* Main Product Catalog Display (9 cols) */}
-          <div className="col-span-12 lg:col-span-9 space-y-6">
-            {/* Controls Bar (Mobile Filter Toggle, Active Tags, Layout Switcher, Sort Dropdown) */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-2xs">
-              {/* Mobile Filter Button */}
-              <button
-                onClick={() => setMobileFilterOpen(true)}
-                className="lg:hidden bg-slate-900 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                <span>
-                  Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
-                </span>
-              </button>
-
-              {/* Active Filter Tags */}
-              <div className="flex flex-wrap items-center gap-2 flex-1">
-                {filters.category && (
-                  <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                    Category: {filters.category}
-                    <X
-                      className="w-3.5 h-3.5 cursor-pointer hover:text-emerald-950"
-                      onClick={() => setFilters({ ...filters, category: "" })}
-                    />
-                  </span>
-                )}
-                {filters.brand && (
-                  <span className="bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                    Brand: {filters.brand}
-                    <X
-                      className="w-3.5 h-3.5 cursor-pointer hover:text-blue-950"
-                      onClick={() => setFilters({ ...filters, brand: "" })}
-                    />
-                  </span>
-                )}
-                {activeFilterCount > 0 && (
-                  <button
-                    onClick={handleResetFilters}
-                    className="text-xs font-bold text-red-600 hover:underline px-1"
-                  >
-                    Clear All
-                  </button>
-                )}
-              </div>
-
-              {/* Sort & Layout View Controls */}
+          {/* Products Grid & Toolbar (9 cols) */}
+          <div className="lg:col-span-9 space-y-6">
+            {/* Top Toolbar */}
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                {/* Sort Dropdown */}
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
-                  >
-                    <option value="featured">Featured Hardware</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="rating">Highest Customer Rating</option>
-                  </select>
-                </div>
+                {/* Mobile Filter Toggle */}
+                <button
+                  onClick={() => setIsMobileFiltersOpen(true)}
+                  className="lg:hidden flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-extrabold transition cursor-pointer"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-emerald-700" />
+                  <span>Filters</span>
+                  {activeFilterCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-[#15803d] text-white text-[10px] flex items-center justify-center font-black">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
 
-                {/* Grid / List Switcher */}
+                {/* Layout Grid/List Switcher */}
                 <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
-                    onClick={() => setLayoutMode("grid")}
+                    onClick={() => setLayout("grid")}
                     className={`p-1.5 rounded-lg transition cursor-pointer ${
-                      layoutMode === "grid"
-                        ? "bg-white text-slate-900 shadow-2xs"
-                        : "text-slate-500"
+                      layout === "grid"
+                        ? "bg-white text-slate-950 shadow-xs"
+                        : "text-slate-500 hover:text-slate-900"
                     }`}
-                    aria-label="Grid View"
+                    title="Grid View"
                   >
                     <Grid className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => setLayoutMode("list")}
+                    onClick={() => setLayout("list")}
                     className={`p-1.5 rounded-lg transition cursor-pointer ${
-                      layoutMode === "list"
-                        ? "bg-white text-slate-900 shadow-2xs"
-                        : "text-slate-500"
+                      layout === "list"
+                        ? "bg-white text-slate-950 shadow-xs"
+                        : "text-slate-500 hover:text-slate-900"
                     }`}
-                    aria-label="List View"
+                    title="List View"
                   >
                     <List className="w-4 h-4" />
                   </button>
                 </div>
               </div>
+
+              {/* Sort Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-500 hidden sm:inline-block">
+                  Sort By:
+                </span>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="appearance-none pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                  >
+                    <option value="newest">Featured & Newest</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                  </select>
+                  <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-3 pointer-events-none" />
+                </div>
+              </div>
             </div>
 
-            {/* Product Display List or Grid */}
-            {filteredProducts.length === 0 ? (
-              <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-4 shadow-2xs">
+            {/* Active Filters Pill Bar */}
+            {activeFilterCount > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                  Active Filters:
+                </span>
+
+                {filters.search && (
+                  <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-lg">
+                    Search: "{filters.search}"
+                    <button
+                      onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
+                      className="text-emerald-600 hover:text-emerald-950"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {filters.category && (
+                  <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold px-2.5 py-1 rounded-lg">
+                    Category: {filters.category}
+                    <button
+                      onClick={() => setFilters((prev) => ({ ...prev, category: "" }))}
+                      className="text-slate-500 hover:text-slate-900"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {filters.brand && (
+                  <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold px-2.5 py-1 rounded-lg">
+                    Brand: {filters.brand}
+                    <button
+                      onClick={() => setFilters((prev) => ({ ...prev, brand: "" }))}
+                      className="text-slate-500 hover:text-slate-900"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                <button
+                  onClick={handleResetFilters}
+                  className="text-xs font-bold text-rose-600 hover:underline ml-2"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+
+            {/* Products Listing Area */}
+            {loading ? (
+              <div className="py-24 text-center flex flex-col items-center justify-center space-y-3 bg-white rounded-3xl border border-slate-200">
+                <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+                <span className="text-xs text-slate-500 font-medium">Loading hardware catalog...</span>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="bg-white border border-slate-200/90 rounded-3xl p-12 text-center space-y-4">
                 <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
                   <PackageSearch className="w-7 h-7" />
                 </div>
-                <h3 className="text-base font-black text-slate-900 uppercase">
-                  No Products Found
-                </h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-                  We couldn&apos;t find any products matching your search
-                  criteria. Try clearing some filters.
-                </p>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-black text-slate-950 uppercase tracking-tight">
+                    No Products Found
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+                    We couldn't find any products matching your active filters. Try adjusting your search query or price constraints.
+                  </p>
+                </div>
                 <button
                   onClick={handleResetFilters}
-                  className="bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl uppercase tracking-wider transition cursor-pointer"
+                  className="px-4 py-2 bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition cursor-pointer shadow-xs"
                 >
                   Reset All Filters
                 </button>
               </div>
-            ) : layoutMode === "grid" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            ) : layout === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                 {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    layout="grid"
-                  />
+                  <ProductCard key={product.id} product={product} layout="grid" />
                 ))}
               </div>
             ) : (
               <div className="space-y-4">
                 {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    layout="list"
-                  />
+                  <ProductCard key={product.id} product={product} layout="list" />
                 ))}
               </div>
             )}
@@ -441,36 +359,45 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Mobile Filters Drawer Overlay */}
-      {mobileFilterOpen && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex justify-end lg:hidden">
-          <div className="w-full max-w-xs bg-white h-full p-6 overflow-y-auto space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
-                Filter Products
-              </h3>
-              <button
-                onClick={() => setMobileFilterOpen(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-500"
-              >
-                <X className="w-5 h-5" />
-              </button>
+      {/* Mobile Filters Drawer Modal */}
+      {isMobileFiltersOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs"
+            onClick={() => setIsMobileFiltersOpen(false)}
+          />
+          <div className="fixed inset-y-0 right-0 max-w-xs w-full bg-white shadow-2xl p-6 overflow-y-auto flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                <h3 className="text-base font-black text-slate-950 uppercase tracking-tight flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-emerald-700" />
+                  Filter Catalog
+                </h3>
+                <button
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <ProductFilters
+                filters={filters}
+                onFilterChange={setFilters}
+                onResetFilters={handleResetFilters}
+                categories={categories}
+                brands={brands}
+              />
             </div>
 
-            <ProductFilters
-              filters={filters}
-              onFilterChange={setFilters}
-              onResetFilters={handleResetFilters}
-              categories={CATEGORIES_SUMMARY}
-              brands={BRANDS_SUMMARY}
-            />
-
-            <button
-              onClick={() => setMobileFilterOpen(false)}
-              className="w-full bg-[#15803d] text-white font-extrabold text-xs py-3.5 rounded-xl uppercase tracking-wider"
-            >
-              Apply Filters ({filteredProducts.length})
-            </button>
+            <div className="pt-6 border-t border-slate-100">
+              <button
+                onClick={() => setIsMobileFiltersOpen(false)}
+                className="w-full py-3 bg-[#15803d] hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer shadow-xs"
+              >
+                View {filteredProducts.length} Results
+              </button>
+            </div>
           </div>
         </div>
       )}

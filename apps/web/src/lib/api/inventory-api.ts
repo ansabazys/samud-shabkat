@@ -56,18 +56,13 @@ export interface PaginatedLowStockResponse {
 
 export const inventoryApi = {
   async getProductInventory(productId: string): Promise<InventoryDetails> {
-    const res = await api.get<{ success: boolean; data: InventoryDetails }>(
-      `/inventory/products/${productId}`,
-    );
-    return res.data.data;
+    const res = await api.get<any>(`/inventory/products/${productId}`);
+    return res.data?.data ?? res.data;
   },
 
   async adjustStock(input: AdjustInventoryPayload) {
-    const res = await api.post<{ success: boolean; data: unknown }>(
-      "/inventory/adjust",
-      input,
-    );
-    return res.data.data;
+    const res = await api.post<any>("/inventory/adjust", input);
+    return res.data?.data ?? res.data;
   },
 
   async getLowStock(params?: {
@@ -75,11 +70,24 @@ export const inventoryApi = {
     limit?: number;
     search?: string;
   }): Promise<PaginatedLowStockResponse> {
-    const res = await api.get<{
-      success: boolean;
-      data: PaginatedLowStockResponse;
-    }>("/inventory/low-stock", { params });
-    return res.data.data;
+    const res = await api.get<any>("/inventory/low-stock", { params });
+    const payload = res.data?.data ?? res.data;
+    if (Array.isArray(payload)) {
+      return {
+        data: payload,
+        total: payload.length,
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+        totalPages: 1,
+      };
+    }
+    return {
+      data: Array.isArray(payload?.data) ? payload.data : [],
+      total: payload?.total ?? (Array.isArray(payload?.data) ? payload.data.length : 0),
+      page: payload?.page ?? 1,
+      limit: payload?.limit ?? 20,
+      totalPages: payload?.totalPages ?? 1,
+    };
   },
 
   async getTransactions(params?: {
@@ -87,10 +95,17 @@ export const inventoryApi = {
     limit?: number;
     productId?: string;
   }): Promise<{ data: InventoryTransactionRecord[]; total: number }> {
-    const res = await api.get<{
-      success: boolean;
-      data: { data: InventoryTransactionRecord[]; total: number };
-    }>("/inventory/transactions", { params });
-    return res.data.data;
+    const res = await api.get<any>("/inventory/transactions", { params });
+    const payload = res.data?.data ?? res.data;
+    if (Array.isArray(payload)) {
+      return {
+        data: payload,
+        total: payload.length,
+      };
+    }
+    return {
+      data: Array.isArray(payload?.data) ? payload.data : [],
+      total: payload?.total ?? (Array.isArray(payload?.data) ? payload.data.length : 0),
+    };
   },
 };

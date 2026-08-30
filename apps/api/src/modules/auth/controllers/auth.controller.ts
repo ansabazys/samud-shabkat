@@ -25,6 +25,15 @@ export class AuthController {
     }
 
     const result = await this.authService.register(validation.data);
+
+    reply.setCookie(AUTH_CONSTANTS.COOKIE_NAME, result.refreshToken, {
+      path: AUTH_CONSTANTS.COOKIE_PATH,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: AUTH_CONSTANTS.COOKIE_MAX_AGE,
+    });
+
     return reply.status(201).send(result);
   }
 
@@ -52,28 +61,37 @@ export class AuthController {
   }
 
   async refresh(request: FastifyRequest, reply: FastifyReply) {
-    const token =
-      (request.body as { refreshToken?: string })?.refreshToken ??
-      request.cookies[AUTH_CONSTANTS.COOKIE_NAME];
+    try {
+      const token =
+        (request.body as { refreshToken?: string })?.refreshToken ??
+        request.cookies[AUTH_CONSTANTS.COOKIE_NAME];
 
-    const validation = refreshSchema.safeParse({ refreshToken: token });
-    if (!validation.success) {
-      const error = new Error("Refresh token is required");
-      Object.assign(error, { statusCode: 401 });
-      throw error;
+      const validation = refreshSchema.safeParse({ refreshToken: token });
+      if (!validation.success || !validation.data.refreshToken) {
+        return reply.status(401).send({
+          statusCode: 401,
+          message: "Refresh token is required",
+        });
+      }
+
+      const result = await this.authService.refresh(validation.data.refreshToken);
+
+      reply.setCookie(AUTH_CONSTANTS.COOKIE_NAME, result.refreshToken, {
+        path: AUTH_CONSTANTS.COOKIE_PATH,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: AUTH_CONSTANTS.COOKIE_MAX_AGE,
+      });
+
+      return reply.status(200).send(result);
+    } catch (err: any) {
+      const status = err?.statusCode && err.statusCode >= 400 && err.statusCode < 500 ? err.statusCode : 401;
+      return reply.status(status).send({
+        statusCode: status,
+        message: err?.message || "Invalid or expired refresh token",
+      });
     }
-
-    const result = await this.authService.refresh(validation.data.refreshToken);
-
-    reply.setCookie(AUTH_CONSTANTS.COOKIE_NAME, result.refreshToken, {
-      path: AUTH_CONSTANTS.COOKIE_PATH,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: AUTH_CONSTANTS.COOKIE_MAX_AGE,
-    });
-
-    return reply.status(200).send(result);
   }
 
   async logout(request: FastifyRequest, reply: FastifyReply) {

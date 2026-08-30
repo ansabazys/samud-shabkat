@@ -17,6 +17,7 @@ import {
 import { useCartStore } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useLanguageStore } from "@/store/language-store";
+import { Logo } from "@/components/ui/logo";
 
 const emptySubscribe = () => () => {};
 
@@ -89,89 +90,78 @@ export function Header() {
     }
   };
 
+  const accountUrl = isAuthenticated ? "/profile" : "/login";
+
   return (
     <header className="w-full bg-white sticky top-0 z-40">
       {/* Top Announcement Bar - Clean & Compact */}
-      <div className="bg-[#15803d] text-white flex items-center justify-center text-[11px] font-medium py-1.5 px-3 sm:px-6 lg:px-8">
-        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="w-full bg-[#15803d] text-white text-[11px] font-medium">
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 py-1.5 flex items-center justify-between gap-2 sm:gap-4">
           {/* Shipping Promotion */}
           <div className="flex items-center gap-1.5 sm:gap-2 tracking-wide truncate">
             <span className="inline-flex items-center gap-1 bg-emerald-700/80 text-emerald-100 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
               {t.freeShipping}
             </span>
-            <span className="hidden xs:inline truncate">{t.onOrdersOver}</span>
-            <span className="xs:hidden">Over</span>
-            <strong className="text-white font-semibold shrink-0">
-              499 {t.currency}
-            </strong>
-            <span className="hidden md:inline text-emerald-200/80 truncate">
-              • {t.expressKSA}
-            </span>
+            <span className="text-emerald-50 hidden sm:inline">|</span>
+            <span className="font-normal truncate">{t.onOrdersOver}</span>
           </div>
 
-          {/* Quick Actions & Region */}
-          <div className="flex items-center gap-2 sm:gap-3 text-emerald-100/90 text-xs font-sans shrink-0">
-            <div className="flex items-center gap-1 font-medium cursor-pointer hover:text-white transition">
-              <span className="text-sm">🇸🇦</span>
-              <span className="font-semibold text-white">{t.currency}</span>
-            </div>
-            <span className="text-emerald-700/80">|</span>
+          {/* Quick Utility Links (Right Side) */}
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0 text-emerald-100">
+            {/* Language Switcher */}
             <button
-              type="button"
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 cursor-pointer hover:text-white transition font-bold px-2 py-0.5 bg-emerald-700/70 hover:bg-emerald-700 rounded-lg text-white text-xs border border-emerald-500/50 shadow-2xs"
-              title={
-                language === "en" ? "التحويل إلى العربية" : "Switch to English"
-              }
+              className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer text-[10.5px] font-semibold"
+              title="Switch Language"
             >
-              <Globe className="w-3.5 h-3.5 text-amber-300" />
-              <span>{language === "en" ? "العربية" : "EN"}</span>
+              <Globe className="w-3.5 h-3.5" />
+              <span>{language === "en" ? "العربية" : "English"}</span>
             </button>
-            <span className="hidden sm:inline text-emerald-700/80">|</span>
+
+            <span className="text-emerald-700/60 hidden sm:inline">•</span>
+
+            {/* Help / Support Link */}
             <Link
-              href="/support"
-              className="hidden sm:flex items-center gap-1 hover:text-white transition"
+              href="/contact"
+              className="hidden sm:flex items-center gap-1 hover:text-white transition-colors text-[10.5px]"
             >
-              <Headphones className="w-3 h-3 text-emerald-200" />
+              <Headphones className="w-3 h-3" />
               <span>{t.help}</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Main Clean Header - Full Width (No Bottom Border under samud.shabkat) */}
-      <div className="w-full px-3 flex justify-center items-center relative sm:px-6 lg:px-8 py-2.5 sm:py-3">
-        <div className="flex w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 items-center justify-between gap-2 sm:gap-4 md:gap-8">
-          {/* Mobile Menu Toggle & Logo */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      {/* Main Header Container */}
+      <div className="w-full border-b border-slate-100 py-3.5">
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 flex items-center justify-between gap-4 sm:gap-8">
+          {/* Mobile Menu Trigger & Logo Container */}
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="py-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg md:hidden transition-colors"
+              className="md:hidden p-1.5 -ml-1 text-slate-700 hover:text-slate-950 focus:outline-none"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? (
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               ) : (
-                <Menu className="w-5 h-5" />
+                <Menu className="w-6 h-6" />
               )}
             </button>
 
-            <Link href="/" className="flex items-center gap-2 group">
-              <span className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900 font-sans">
-                samud<span className="text-emerald-600">.</span>shabkat
-              </span>
-            </Link>
+            {/* Brand Logo */}
+            <Logo href="/" size="md" />
           </div>
 
-          {/* Desktop Search Bar */}
+          {/* Desktop Search Bar (Hidden on Mobile) */}
           <form
             onSubmit={handleSearch}
-            className="hidden md:flex flex-1 max-w-2xl items-center bg-slate-50 hover:bg-slate-100/70 focus-within:bg-white border border-slate-200 focus-within:border-slate-800 focus-within:ring-2 focus-within:ring-slate-900/5 rounded-xl transition-all overflow-hidden shadow-2xs group"
+            className="hidden md:flex flex-1 max-w-2xl items-center bg-slate-50 hover:bg-slate-100/80 focus-within:bg-white border border-slate-200 focus-within:border-slate-800 focus-within:ring-2 focus-within:ring-slate-900/5 rounded-2xl transition-all overflow-hidden shadow-2xs group"
           >
             {/* Search Icon & Button */}
             <button
               type="submit"
-              className="pl-3.5 pr-2 py-2 text-slate-400 group-focus-within:text-slate-900 hover:text-slate-900 transition-colors"
+              className="pl-3.5 pr-2 py-2 text-slate-400 group-focus-within:text-slate-900 hover:text-slate-900 transition-colors cursor-pointer"
               aria-label="Search"
             >
               <Search className="w-4 h-4" />
@@ -210,13 +200,14 @@ export function Header() {
           <div className="flex items-center gap-4 sm:gap-5 text-slate-700 shrink-0">
             {/* User / Account */}
             <Link
-              href={isAuthenticated ? "/account" : "/login"}
+              href={accountUrl}
               className="p-1 hover:text-emerald-600 transition-colors"
-              title={isAuthenticated ? user?.firstName || "Account" : "Sign In"}
+              title={isAuthenticated ? user?.firstName || "My Profile" : "Sign In"}
             >
               <User className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.75]" />
             </Link>
 
+            {/* Cart Button */}
             <button
               onClick={() => setDrawerOpen(true)}
               className="p-1 hover:text-emerald-600 transition-colors relative cursor-pointer group"
@@ -232,8 +223,8 @@ export function Header() {
       </div>
 
       {/* Mobile Search Bar Row - Mobile Only (Hidden on Desktop) */}
-      <div className="md:hidden w-full bg-white border-t border-b border-slate-100 py-2.5 px-4 shadow-2xs">
-        <div className="w-full max-w-7xl mx-auto">
+      <div className="md:hidden w-full bg-white border-t border-b border-slate-100 py-2.5">
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
           <form
             onSubmit={handleSearch}
             className="flex items-center bg-slate-50 hover:bg-slate-100/70 focus-within:bg-white border border-slate-200 focus-within:border-slate-800 focus-within:ring-2 focus-within:ring-slate-900/5 rounded-xl transition-all overflow-hidden shadow-2xs group w-full"
@@ -252,7 +243,7 @@ export function Header() {
               placeholder={t.searchPlaceholder}
               className="flex-1 py-2 text-xs text-slate-900 placeholder:text-slate-400 bg-transparent focus:outline-none"
             />
-            <div className="h-4 w-[1px] bg-slate-200 shrink-0 mx-1" />
+            <div className="h-4 w-[1px] bg-slate-200 mx-1" />
             <div className="relative flex items-center pr-2 shrink-0">
               <select
                 value={selectedCategory}
@@ -272,7 +263,7 @@ export function Header() {
       </div>
 
       {/* Secondary Navigation Row - Desktop Only (Hidden on Mobile) */}
-      <nav className="hidden md:flex bg-white w-full border-b border-slate-100 py-1.5 px-3 sm:px-6 lg:px-8">
+      <nav className="hidden md:flex bg-white w-full border-b border-slate-100 py-1.5">
         <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 flex items-center justify-center">
           <div className="flex items-center gap-2 sm:gap-6 text-xs sm:text-sm font-semibold text-slate-700 shrink-0">
             <Link
@@ -300,7 +291,7 @@ export function Header() {
               {language === "ar" ? "اتصل بنا" : "Contact Us"}
             </Link>
             <Link
-              href="/account/orders"
+              href="/orders"
               className="px-2 py-1 hover:text-emerald-600 transition-colors whitespace-nowrap"
             >
               {t.myOrders}
@@ -382,7 +373,7 @@ export function Header() {
               Contact Us
             </Link>
             <Link
-              href="/account/orders"
+              href="/orders"
               onClick={() => setMobileMenuOpen(false)}
               className="p-2 hover:bg-slate-50 rounded-lg"
             >
@@ -392,13 +383,13 @@ export function Header() {
 
           <div className="border-t border-slate-100 pt-3 flex items-center justify-end text-xs font-medium text-slate-700">
             <Link
-              href={isAuthenticated ? "/account" : "/login"}
+              href={accountUrl}
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg"
             >
               <User className="w-4 h-4 text-slate-600" />
               <span>
-                {isAuthenticated ? user?.firstName || "Account" : "Sign In"}
+                {isAuthenticated ? user?.firstName || "My Profile" : "Sign In"}
               </span>
             </Link>
           </div>

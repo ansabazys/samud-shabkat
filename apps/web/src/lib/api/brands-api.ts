@@ -25,34 +25,39 @@ export interface UpdateBrandInput {
 
 export const brandsApi = {
   async getBrands(params?: BrandQueryParams): Promise<PaginatedResponse<Brand>> {
-    const res = await api.get<{
-      success: boolean;
-      data: PaginatedResponse<Brand>;
-    }>("/brands", { params });
-    return res.data.data;
+    const res = await api.get<any>("/brands", { params });
+    const payload = res.data?.data ?? res.data;
+    if (Array.isArray(payload)) {
+      return {
+        data: payload,
+        total: payload.length,
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+        totalPages: 1,
+      };
+    }
+    return {
+      data: Array.isArray(payload?.data) ? payload.data : [],
+      total: payload?.total ?? (Array.isArray(payload?.data) ? payload.data.length : 0),
+      page: payload?.page ?? 1,
+      limit: payload?.limit ?? 20,
+      totalPages: payload?.totalPages ?? 1,
+    };
   },
 
   async getBrandById(id: string): Promise<Brand> {
-    const res = await api.get<{ success: boolean; data: Brand }>(
-      `/brands/${id}`,
-    );
-    return res.data.data;
+    const res = await api.get<any>(`/brands/${id}`);
+    return res.data?.data ?? res.data;
   },
 
   async createBrand(input: CreateBrandInput): Promise<Brand> {
-    const res = await api.post<{ success: boolean; data: Brand }>(
-      "/brands",
-      input,
-    );
-    return res.data.data;
+    const res = await api.post<any>("/brands", input);
+    return res.data?.data ?? res.data;
   },
 
   async updateBrand(id: string, input: UpdateBrandInput): Promise<Brand> {
-    const res = await api.put<{ success: boolean; data: Brand }>(
-      `/brands/${id}`,
-      input,
-    );
-    return res.data.data;
+    const res = await api.put<any>(`/brands/${id}`, input);
+    return res.data?.data ?? res.data;
   },
 
   async deleteBrand(id: string): Promise<void> {

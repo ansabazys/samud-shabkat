@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   Package,
@@ -18,198 +19,74 @@ import {
   FileText,
   ShoppingBag,
   CreditCard,
+  Lock,
+  User,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
-
-export interface OrderItem {
-  id: string;
-  name: string;
-  sku: string;
-  image: string;
-  quantity: number;
-  price: number;
-  brand?: string;
-  category?: string;
-}
-
-export interface Order {
-  id: string;
-  orderNumber: string;
-  date: string;
-  fulfillmentType: "delivery" | "takeaway";
-  status:
-    | "processing"
-    | "dispatched"
-    | "delivered"
-    | "ready_for_pickup"
-    | "cancelled";
-  paymentStatus: "paid" | "pending_store_pickup" | "cod";
-  paymentMethod:
-    "Mada / Visa" | "Tabby 4x Pay" | "Cash on Delivery" | "Cash on Pickup";
-  subtotalAmount: number;
-  vatAmount: number;
-  totalAmount: number;
-  items: OrderItem[];
-  trackingNumber?: string;
-  carrier?: string;
-  storeLocation?: string;
-  customerName: string;
-  customerPhone: string;
-  shippingAddress?: string;
-  zatcaQrCodeUrl?: string;
-}
-
-const MOCK_ORDERS: Order[] = [
-  {
-    id: "ord-1",
-    orderNumber: "ORD-984214",
-    date: "August 20, 2026",
-    fulfillmentType: "delivery",
-    status: "dispatched",
-    paymentStatus: "cod",
-    paymentMethod: "Cash on Delivery",
-    subtotalAmount: 4250.0,
-    vatAmount: 637.5,
-    totalAmount: 4887.5,
-    trackingNumber: "SMSA-8849201",
-    carrier: "SMSA Express",
-    customerName: "Ahmed Al-Mansoor",
-    customerPhone: "+966 50 123 4567",
-    shippingAddress:
-      "Building 42, King Fahd Road, Olaya District, Riyadh 12211, KSA",
-    items: [
-      {
-        id: "cat-prod-1",
-        name: "Cisco Catalyst 9300 48-Port Managed PoE+ Switch (740W)",
-        sku: "CS-C9300-48P",
-        brand: "Cisco",
-        category: "Networking",
-        image:
-          "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=300&auto=format&fit=crop",
-        quantity: 1,
-        price: 4250.0,
-      },
-    ],
-  },
-  {
-    id: "ord-2",
-    orderNumber: "ORD-761920",
-    date: "August 18, 2026",
-    fulfillmentType: "takeaway",
-    status: "ready_for_pickup",
-    paymentStatus: "pending_store_pickup",
-    paymentMethod: "Cash on Pickup",
-    storeLocation: "Riyadh Main Store - Olaya Computer Market, Store #14",
-    subtotalAmount: 12499.0,
-    vatAmount: 1874.85,
-    totalAmount: 14373.85,
-    customerName: "Ahmed Al-Mansoor",
-    customerPhone: "+966 50 123 4567",
-    items: [
-      {
-        id: "cat-prod-3",
-        name: 'Apple MacBook Pro 16" M3 Max 36GB / 1TB SSD Space Black',
-        sku: "APL-MBP16-M3M",
-        brand: "Apple",
-        category: "Computers",
-        image:
-          "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&auto=format&fit=crop",
-        quantity: 2,
-        price: 5699.0,
-      },
-      {
-        id: "cat-prod-8",
-        name: "Logitech MX Keys S Wireless Illumination Keyboard",
-        sku: "LOG-MXKEYS-S",
-        brand: "Logitech",
-        category: "Accessories",
-        image:
-          "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&auto=format&fit=crop",
-        quantity: 2,
-        price: 480.0,
-      },
-    ],
-  },
-  {
-    id: "ord-3",
-    orderNumber: "ORD-541902",
-    date: "August 10, 2026",
-    fulfillmentType: "delivery",
-    status: "delivered",
-    paymentStatus: "paid",
-    paymentMethod: "Tabby 4x Pay",
-    subtotalAmount: 1950.0,
-    vatAmount: 292.5,
-    totalAmount: 2242.5,
-    trackingNumber: "ARAMEX-992014",
-    carrier: "Aramex Express",
-    customerName: "Ahmed Al-Mansoor",
-    customerPhone: "+966 50 123 4567",
-    shippingAddress: "Villa 18, Al-Yasmin District, Riyadh 13322, KSA",
-    items: [
-      {
-        id: "cat-prod-2",
-        name: "Ubiquiti UniFi Dream Machine Pro Security Gateway",
-        sku: "UBQ-UDM-PRO",
-        brand: "Ubiquiti",
-        category: "Networking",
-        image:
-          "https://images.unsplash.com/photo-1543512214-318c7553f230?w=300&auto=format&fit=crop",
-        quantity: 1,
-        price: 1950.0,
-      },
-    ],
-  },
-  {
-    id: "ord-4",
-    orderNumber: "ORD-319084",
-    date: "July 28, 2026",
-    fulfillmentType: "delivery",
-    status: "delivered",
-    paymentStatus: "paid",
-    paymentMethod: "Mada / Visa",
-    subtotalAmount: 6450.0,
-    vatAmount: 967.5,
-    totalAmount: 7417.5,
-    trackingNumber: "SMSA-7730192",
-    carrier: "SMSA Express",
-    customerName: "Ahmed Al-Mansoor",
-    customerPhone: "+966 50 123 4567",
-    shippingAddress: "Villa 18, Al-Yasmin District, Riyadh 13322, KSA",
-    items: [
-      {
-        id: "cat-prod-4",
-        name: "Synology DiskStation DS1823xs+ 8-Bay Enterprise NAS",
-        sku: "SYN-DS1823XS",
-        brand: "Synology",
-        category: "Storage & NAS",
-        image:
-          "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=300&auto=format&fit=crop",
-        quantity: 1,
-        price: 6450.0,
-      },
-    ],
-  },
-];
+import { useAuthStore } from "@/store/auth-store";
+import { ordersApi, type OrderRecord } from "@/lib/api/orders-api";
+import { Logo } from "@/components/ui/logo";
 
 export default function OrdersPage() {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const addItem = useCartStore((state) => state.addItem);
+
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState<
     "all" | "in_progress" | "delivered" | "takeaway"
   >("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Modals & User Feedback
   const [selectedOrderTracking, setSelectedOrderTracking] =
-    useState<Order | null>(null);
+    useState<OrderRecord | null>(null);
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] =
-    useState<Order | null>(null);
+    useState<OrderRecord | null>(null);
   const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const addItem = useCartStore((state) => state.addItem);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  const fetchOrders = async () => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await ordersApi.getMyOrders({ limit: 50 });
+      setOrders(res.data || []);
+    } catch (err: any) {
+      console.error("Failed to fetch my orders:", err);
+      if (err?.response?.status === 401) {
+        useAuthStore.getState().logout();
+        return;
+      }
+      setError(
+        err?.response?.data?.message || err?.message || "Failed to load orders",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrders();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const handleCopyOrderNumber = (num: string) => {
     navigator.clipboard.writeText(num);
@@ -218,19 +95,19 @@ export default function OrdersPage() {
     setTimeout(() => setCopiedOrderId(null), 2000);
   };
 
-  const handleReorder = (order: Order) => {
+  const handleReorder = (order: OrderRecord) => {
     order.items.forEach((item) => {
       addItem(
         {
-          id: item.id,
-          name: item.name,
-          slug: item.id,
+          id: item.productId || item.id,
+          name: item.productName,
+          slug: item.productId || item.sku,
           sku: item.sku,
-          price: item.price,
-          categoryId: "cat-1",
-          brandId: "brand-1",
+          price: Number(item.unitPrice),
+          categoryId: "reorder",
+          brandId: "reorder",
           isActive: true,
-          images: [{ id: "img-1", url: item.image, isPrimary: true }],
+          images: [],
         },
         item.quantity,
       );
@@ -242,50 +119,114 @@ export default function OrdersPage() {
 
   // Filter Logic
   const filteredOrders = useMemo(() => {
-    return MOCK_ORDERS.filter((order) => {
+    return orders.filter((order) => {
+      const isDelivered =
+        order.orderStatus === "DELIVERED" || order.orderStatus === "COMPLETED";
+      const isCancelled = order.orderStatus === "CANCELLED";
+      const isTakeaway = order.fulfillmentType === "STORE_PICKUP";
+
       if (activeTab === "in_progress") {
-        if (order.status === "delivered" || order.status === "cancelled")
-          return false;
+        if (isDelivered || isCancelled) return false;
       } else if (activeTab === "delivered") {
-        if (order.status !== "delivered") return false;
+        if (!isDelivered) return false;
       } else if (activeTab === "takeaway") {
-        if (order.fulfillmentType !== "takeaway") return false;
+        if (!isTakeaway) return false;
       }
 
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesNumber = order.orderNumber.toLowerCase().includes(query);
-        const matchesItems = order.items.some(
+        const matchesItems = (order.items || []).some(
           (i) =>
-            i.name.toLowerCase().includes(query) ||
-            i.sku.toLowerCase().includes(query) ||
-            (i.brand && i.brand.toLowerCase().includes(query)),
+            i.productName.toLowerCase().includes(query) ||
+            i.sku.toLowerCase().includes(query),
         );
         return matchesNumber || matchesItems;
       }
       return true;
     });
-  }, [activeTab, searchQuery]);
+  }, [orders, activeTab, searchQuery]);
 
   // KPI Calculations
   const totalSpent = useMemo(
-    () => MOCK_ORDERS.reduce((acc, o) => acc + o.totalAmount, 0),
-    [],
+    () => orders.reduce((acc, o) => acc + Number(o.totalAmount || 0), 0),
+    [orders],
   );
+
   const activeCount = useMemo(
     () =>
-      MOCK_ORDERS.filter(
+      orders.filter(
         (o) =>
-          o.status === "processing" ||
-          o.status === "dispatched" ||
-          o.status === "ready_for_pickup",
+          o.orderStatus !== "DELIVERED" &&
+          o.orderStatus !== "COMPLETED" &&
+          o.orderStatus !== "CANCELLED",
       ).length,
-    [],
+    [orders],
   );
+
   const deliveredCount = useMemo(
-    () => MOCK_ORDERS.filter((o) => o.status === "delivered").length,
-    [],
+    () =>
+      orders.filter(
+        (o) =>
+          o.orderStatus === "DELIVERED" || o.orderStatus === "COMPLETED",
+      ).length,
+    [orders],
   );
+
+  // Unauthenticated Guard Screen
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
+        <div className="bg-white border-b border-slate-200/80 py-6 sm:py-8">
+          <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-3">
+              <Link href="/" className="hover:text-emerald-700 transition">
+                Home
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-slate-900 font-extrabold">My Orders</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-950 uppercase tracking-tight">
+              My Orders & Purchases
+            </h1>
+          </div>
+        </div>
+
+        <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 pt-12">
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-8 sm:p-14 text-center max-w-md mx-auto shadow-sm space-y-5">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center justify-center mx-auto shadow-2xs">
+              <Lock className="w-8 h-8 stroke-[1.75]" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h2 className="text-xl font-black text-slate-950 uppercase tracking-tight">
+                Sign In Required
+              </h2>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                Please sign in with your account to view your past purchases, live tracking, and ZATCA tax invoices.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href="/login?redirect=/orders"
+                className="w-full sm:w-auto bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition shadow-2xs flex items-center justify-center gap-2"
+              >
+                <User className="w-4 h-4" />
+                <span>Sign In Now</span>
+              </Link>
+              <Link
+                href="/register"
+                className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition flex items-center justify-center"
+              >
+                Create Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
@@ -306,7 +247,7 @@ export default function OrdersPage() {
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
             <Link href="/profile" className="hover:text-emerald-700 transition">
-              My Account
+              My Profile
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
             <span className="text-slate-900 font-extrabold">My Orders</span>
@@ -319,8 +260,7 @@ export default function OrdersPage() {
                 <span className="absolute bottom-[-8px] left-0 w-full h-[3px] bg-[#FFD400] rounded-full" />
               </h1>
               <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-2">
-                Track live KSA courier deliveries, store takeaway pick-ups, and
-                download official ZATCA VAT tax invoices.
+                Live order tracking, store takeaways, and official ZATCA VAT tax invoices.
               </p>
             </div>
 
@@ -336,7 +276,7 @@ export default function OrdersPage() {
                 href="/profile"
                 className="text-xs font-extrabold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-xl border border-slate-200 transition"
               >
-                Account Info
+                Account Profile
               </Link>
             </div>
           </div>
@@ -353,7 +293,7 @@ export default function OrdersPage() {
             </span>
             <div className="flex items-baseline justify-between">
               <span className="text-xl sm:text-2xl font-black text-slate-950">
-                {MOCK_ORDERS.length}
+                {orders.length}
               </span>
               <Package className="w-5 h-5 text-emerald-600" />
             </div>
@@ -361,7 +301,7 @@ export default function OrdersPage() {
 
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
             <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-              Active Shipments
+              Active Orders
             </span>
             <div className="flex items-baseline justify-between">
               <span className="text-xl sm:text-2xl font-black text-amber-600">
@@ -385,13 +325,14 @@ export default function OrdersPage() {
 
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
             <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-              Total Value (SAR)
+              Total Spent
             </span>
             <div className="flex items-baseline justify-between">
               <span className="text-lg sm:text-xl font-black text-slate-950">
                 SAR{" "}
                 {totalSpent.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
                 })}
               </span>
               <CreditCard className="w-5 h-5 text-blue-600" />
@@ -404,10 +345,10 @@ export default function OrdersPage() {
           {/* Tab Filters */}
           <div className="flex items-center gap-2 border-b sm:border-b-0 border-slate-100 pb-2 sm:pb-0 w-full sm:w-auto overflow-x-auto no-scrollbar">
             {[
-              { id: "all", label: `All Orders (${MOCK_ORDERS.length})` },
-              { id: "in_progress", label: `Active & Pickup (${activeCount})` },
+              { id: "all", label: `All Orders (${orders.length})` },
+              { id: "in_progress", label: `Active (${activeCount})` },
               { id: "delivered", label: `Delivered (${deliveredCount})` },
-              { id: "takeaway", label: "Store Takeaway" },
+              { id: "takeaway", label: "Takeaway Pickup" },
             ].map((tab) => {
               const isSelected = activeTab === tab.id;
               return (
@@ -430,7 +371,7 @@ export default function OrdersPage() {
           <div className="relative w-full sm:w-72">
             <input
               type="text"
-              placeholder="Search by order #, SKU, or product..."
+              placeholder="Search order # or SKU..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
@@ -439,606 +380,442 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        {/* Orders Card List */}
-        <div className="space-y-5">
-          {filteredOrders.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-4 shadow-2xs">
-              <Package className="w-12 h-12 text-slate-300 mx-auto" />
-              <h3 className="text-base font-black text-slate-900 uppercase">
-                No Orders Match Your Filter
-              </h3>
-              <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto">
-                We couldn&apos;t find any purchases matching your selected
-                filter or search term.
-              </p>
-              <button
-                onClick={() => {
-                  setActiveTab("all");
-                  setSearchQuery("");
-                }}
-                className="bg-slate-900 text-white text-xs font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider"
-              >
-                Clear Search & Filters
-              </button>
-            </div>
-          ) : (
-            filteredOrders.map((order) => (
+        {/* Loading Skeleton */}
+        {loading && (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
               <div
-                key={order.id}
-                className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs hover:border-slate-300 transition-all duration-300"
-              >
-                {/* Order Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                      <span className="text-base font-black text-slate-950 uppercase tracking-tight flex items-center gap-1.5">
-                        {order.orderNumber}
-                        <button
-                          onClick={() =>
-                            handleCopyOrderNumber(order.orderNumber)
-                          }
-                          className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 transition cursor-pointer"
-                          title="Copy Order Number"
-                        >
-                          {copiedOrderId === order.orderNumber ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </span>
+                key={i}
+                className="bg-white border border-slate-200 rounded-2xl p-6 h-48 animate-pulse"
+              />
+            ))}
+          </div>
+        )}
 
-                      {/* Fulfillment Type Tag */}
-                      {order.fulfillmentType === "takeaway" ? (
-                        <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-[10px] font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                          <Store className="w-3 h-3 text-emerald-700" />
-                          <span>STORE TAKEAWAY</span>
-                        </span>
-                      ) : (
-                        <span className="bg-blue-50 text-blue-800 border border-blue-200/80 text-[10px] font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                          <Truck className="w-3 h-3 text-blue-700" />
-                          <span>EXPRESS HOME DELIVERY</span>
-                        </span>
-                      )}
+        {/* Error Alert */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 text-xs font-semibold p-4 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              onClick={fetchOrders}
+              className="underline font-bold hover:text-red-950 cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
-                      {/* Payment Method Badge */}
-                      <span className="bg-slate-100 text-slate-700 border border-slate-200/80 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
-                        {order.paymentMethod}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 pt-0.5">
-                      <span>Placed on {order.date}</span>
-                      <span>•</span>
-                      <span>
-                        {order.items.length} Item
-                        {order.items.length > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="flex items-center gap-3 self-start sm:self-auto">
-                    {order.status === "dispatched" && (
-                      <span className="bg-amber-500 text-slate-950 text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
-                        <Truck className="w-4 h-4" />
-                        <span>IN TRANSIT</span>
-                      </span>
-                    )}
-                    {order.status === "ready_for_pickup" && (
-                      <span className="bg-[#15803d] text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
-                        <Store className="w-4 h-4" />
-                        <span>READY FOR PICKUP</span>
-                      </span>
-                    )}
-                    {order.status === "delivered" && (
-                      <span className="bg-slate-900 text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        <span>DELIVERED</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Items List Table/Rows */}
-                <div className="space-y-3">
-                  {order.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-slate-50/80 rounded-xl border border-slate-100"
+        {/* Orders Card List */}
+        {!loading && !error && (
+          <div className="space-y-5">
+            {filteredOrders.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-4 shadow-2xs">
+                <Package className="w-12 h-12 text-slate-300 mx-auto" />
+                <h3 className="text-base font-black text-slate-950 uppercase">
+                  No Orders Found
+                </h3>
+                <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+                  {orders.length === 0
+                    ? "You haven't placed any orders yet. Start exploring our hardware catalog!"
+                    : "No purchases match your current search or filter."}
+                </p>
+                <div className="pt-2">
+                  {orders.length === 0 ? (
+                    <Link
+                      href="/products"
+                      className="bg-[#15803d] hover:bg-emerald-700 text-white text-xs font-extrabold px-6 py-2.5 rounded-xl uppercase tracking-wider transition inline-block"
                     >
-                      <div className="flex items-center gap-3 sm:gap-4 flex-1">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white border border-slate-200/80 p-1.5 shrink-0 overflow-hidden">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
+                      Start Shopping
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setActiveTab("all");
+                        setSearchQuery("");
+                      }}
+                      className="bg-slate-900 text-white text-xs font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider cursor-pointer"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              filteredOrders.map((order) => {
+                const totalAmt = Number(order.totalAmount || 0);
+                const subtotalAmt = totalAmt / 1.15;
+                const vatAmt = totalAmt - subtotalAmt;
+                const formattedDate = new Date(order.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                });
+
+                return (
+                  <div
+                    key={order.id}
+                    className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs hover:border-slate-300 transition-all duration-300"
+                  >
+                    {/* Order Header Row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                          <span className="text-base font-black text-slate-950 uppercase tracking-tight flex items-center gap-1.5">
+                            {order.orderNumber}
+                            <button
+                              onClick={() => handleCopyOrderNumber(order.orderNumber)}
+                              className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                              title="Copy Order Number"
+                            >
+                              {copiedOrderId === order.orderNumber ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </span>
+
+                          {/* Fulfillment Type Tag */}
+                          {order.fulfillmentType === "STORE_PICKUP" ? (
+                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-[10px] font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                              <Store className="w-3 h-3 text-emerald-700" />
+                              <span>STORE PICKUP</span>
+                            </span>
+                          ) : (
+                            <span className="bg-blue-50 text-blue-800 border border-blue-200/80 text-[10px] font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                              <Truck className="w-3 h-3 text-blue-700" />
+                              <span>HOME DELIVERY</span>
+                            </span>
+                          )}
+
+                          {/* Payment Method Badge */}
+                          <span className="bg-slate-100 text-slate-700 border border-slate-200/80 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
+                            {order.paymentMethod.replace(/_/g, " ")}
+                          </span>
                         </div>
-                        <div className="space-y-0.5 flex-1">
-                          <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                            <span>{item.brand}</span>
-                            <span>•</span>
-                            <span className="text-emerald-700">
-                              {item.category}
-                            </span>
-                            <span>•</span>
-                            <span className="font-mono text-slate-500">
-                              SKU: {item.sku}
-                            </span>
-                          </div>
-                          <Link
-                            href={`/products/${item.id}`}
-                            className="text-xs sm:text-sm font-extrabold text-slate-900 hover:text-emerald-700 transition-colors line-clamp-1"
-                          >
-                            {item.name}
-                          </Link>
-                          <span className="text-xs font-semibold text-slate-500 block">
-                            Qty: {item.quantity} × SAR{" "}
-                            {item.price.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                            })}
+
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 pt-0.5">
+                          <span>Placed on {formattedDate}</span>
+                          <span>•</span>
+                          <span>
+                            {(order.items || []).length} Item
+                            {(order.items || []).length > 1 ? "s" : ""}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
-                        <span className="text-xs sm:text-sm font-black text-slate-950">
-                          SAR{" "}
-                          {(item.price * item.quantity).toLocaleString(
-                            "en-US",
-                            { minimumFractionDigits: 2 },
-                          )}
-                        </span>
+                      {/* Status Badge */}
+                      <div className="flex items-center gap-3 self-start sm:self-auto">
+                        {order.orderStatus === "PENDING" && (
+                          <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
+                            <Clock className="w-4 h-4 text-amber-700" />
+                            <span>PENDING</span>
+                          </span>
+                        )}
+                        {(order.orderStatus === "CONFIRMED" || order.orderStatus === "PROCESSING") && (
+                          <span className="bg-blue-600 text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
+                            <Package className="w-4 h-4" />
+                            <span>PROCESSING</span>
+                          </span>
+                        )}
+                        {(order.orderStatus === "READY_FOR_PICKUP" || order.orderStatus === "READY_FOR_COLLECTION") && (
+                          <span className="bg-[#15803d] text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
+                            <Store className="w-4 h-4" />
+                            <span>READY FOR PICKUP</span>
+                          </span>
+                        )}
+                        {order.orderStatus === "OUT_FOR_DELIVERY" && (
+                          <span className="bg-amber-500 text-slate-950 text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
+                            <Truck className="w-4 h-4" />
+                            <span>OUT FOR DELIVERY</span>
+                          </span>
+                        )}
+                        {(order.orderStatus === "DELIVERED" || order.orderStatus === "COMPLETED") && (
+                          <span className="bg-slate-900 text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <span>DELIVERED</span>
+                          </span>
+                        )}
+                        {order.orderStatus === "CANCELLED" && (
+                          <span className="bg-red-600 text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
+                            <X className="w-4 h-4" />
+                            <span>CANCELLED</span>
+                          </span>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
 
-                {/* Footer Totals & Actions Row */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between pt-4 border-t border-slate-100 gap-4">
-                  <div className="space-y-0.5">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-bold text-slate-500">
-                        Total Amount:
-                      </span>
-                      <span className="text-base font-black text-slate-950">
-                        SAR{" "}
-                        {order.totalAmount.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
-                        Incl. 15% VAT (SAR{" "}
-                        {order.vatAmount.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
-                        )
-                      </span>
+                    {/* Items List Table/Rows */}
+                    <div className="space-y-3">
+                      {(order.items || []).map((item) => {
+                        const unitP = Number(item.unitPrice || 0);
+                        const totalP = unitP * item.quantity;
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-slate-50/80 rounded-xl border border-slate-100"
+                          >
+                            <div className="flex items-center gap-3 sm:gap-4 flex-1">
+                              <div className="w-12 h-12 rounded-xl bg-white border border-slate-200/80 p-1 shrink-0 flex items-center justify-center text-slate-400">
+                                <Package className="w-6 h-6" />
+                              </div>
+                              <div className="space-y-0.5 flex-1">
+                                <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                  <span className="font-mono text-slate-500">
+                                    SKU: {item.sku}
+                                  </span>
+                                </div>
+                                <span className="text-xs sm:text-sm font-extrabold text-slate-900 block line-clamp-1">
+                                  {item.productName}
+                                </span>
+                                <span className="text-xs font-semibold text-slate-500 block">
+                                  Qty: {item.quantity} × SAR {unitP.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
+                              <span className="text-xs sm:text-sm font-black text-slate-950">
+                                SAR {totalP.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    {order.storeLocation && (
-                      <span className="text-xs font-semibold text-emerald-800 block flex items-center gap-1 pt-1">
-                        <Store className="w-3.5 h-3.5 shrink-0" />
-                        Pickup Location: {order.storeLocation}
-                      </span>
-                    )}
+                    {/* Footer Totals & Actions Row */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between pt-4 border-t border-slate-100 gap-4">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-semibold text-slate-500">
+                          Total (15% ZATCA VAT Included):
+                        </span>
+                        <div className="text-lg font-black text-slate-950">
+                          SAR {totalAmt.toFixed(2)}
+                        </div>
+                      </div>
 
-                    {order.shippingAddress && (
-                      <span className="text-xs font-semibold text-slate-600 block flex items-center gap-1 pt-0.5">
-                        <Truck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        Deliver to: {order.shippingAddress}
-                      </span>
-                    )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => setSelectedOrderTracking(order)}
+                          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Truck className="w-3.5 h-3.5" />
+                          <span>Track Status</span>
+                        </button>
+
+                        <button
+                          onClick={() => setSelectedInvoiceOrder(order)}
+                          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>VAT Invoice</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleReorder(order)}
+                          className="px-4 py-2 bg-[#15803d] hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Buy Again</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={() => setSelectedOrderTracking(order)}
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-black px-3.5 py-2.5 rounded-xl uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
-                    >
-                      <Clock className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>Track Status</span>
-                    </button>
-
-                    <button
-                      onClick={() => setSelectedInvoiceOrder(order)}
-                      className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 text-xs font-black px-3.5 py-2.5 rounded-xl uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-blue-600" />
-                      <span>ZATCA VAT Invoice</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleReorder(order)}
-                      className="bg-[#15803d] hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Reorder Items</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
-      {/* 1. Live Order Tracking Modal */}
+      {/* Tracking Modal */}
       {selectedOrderTracking && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full tracking-wider">
-                  LIVE SHIPMENT TRACKING
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                  Live Order Tracker
                 </span>
-                <h3 className="text-base font-black text-slate-950 uppercase tracking-tight mt-1">
-                  Order {selectedOrderTracking.orderNumber}
+                <h3 className="text-lg font-black text-slate-950 uppercase">
+                  {selectedOrderTracking.orderNumber}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedOrderTracking(null)}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Courier Info Box */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-slate-500">
-                  Fulfillment Method
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase">
+                  Destination / Pickup
                 </span>
-                <span className="text-xs font-black text-slate-900 uppercase">
-                  {selectedOrderTracking.fulfillmentType === "takeaway"
-                    ? "Store Pickup"
-                    : selectedOrderTracking.carrier || "SMSA Express"}
-                </span>
-              </div>
-              {selectedOrderTracking.trackingNumber && (
-                <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                  <span className="text-xs font-extrabold text-slate-500">
-                    Tracking Number
-                  </span>
-                  <span className="text-xs font-mono font-black text-emerald-700">
-                    {selectedOrderTracking.trackingNumber}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Timeline Steps */}
-            <div className="space-y-6 pl-4 border-l-2 border-emerald-600 py-1">
-              {/* Step 1 */}
-              <div className="relative">
-                <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center absolute -left-[25px] top-0.5">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                </div>
-                <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
-                  Order Placed & Confirmed
-                </h4>
-                <p className="text-[11px] font-medium text-slate-500">
-                  {selectedOrderTracking.date} • Received by Samud Shabkat
+                <p className="text-xs font-bold text-slate-800">
+                  {selectedOrderTracking.shippingAddress}
+                </p>
+                <p className="text-xs text-slate-500 font-medium">
+                  Contact Phone: {selectedOrderTracking.contactPhone}
                 </p>
               </div>
 
-              {/* Step 2 */}
-              <div className="relative">
-                <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center absolute -left-[25px] top-0.5">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+              {/* Progress Bar */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                  <span>Order Placed</span>
+                  <span>Processing</span>
+                  <span>Dispatched</span>
+                  <span>Complete</span>
                 </div>
-                <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
-                  Payment Verified & ZATCA Invoice Generated
-                </h4>
-                <p className="text-[11px] font-medium text-slate-500">
-                  15% VAT tax invoice issued for{" "}
-                  {selectedOrderTracking.customerName}
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="relative">
-                <div
-                  className={`w-4 h-4 rounded-full flex items-center justify-center absolute -left-[25px] top-0.5 ${
-                    selectedOrderTracking.status !== "processing"
-                      ? "bg-emerald-600 text-white"
-                      : "bg-amber-400 text-slate-950"
-                  }`}
-                >
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#15803d] rounded-full transition-all duration-500"
+                    style={{
+                      width:
+                        selectedOrderTracking.orderStatus === "DELIVERED" ||
+                        selectedOrderTracking.orderStatus === "COMPLETED"
+                          ? "100%"
+                          : selectedOrderTracking.orderStatus === "OUT_FOR_DELIVERY" ||
+                              selectedOrderTracking.orderStatus === "READY_FOR_PICKUP"
+                            ? "75%"
+                            : selectedOrderTracking.orderStatus === "CONFIRMED" ||
+                                selectedOrderTracking.orderStatus === "PROCESSING"
+                              ? "50%"
+                              : "25%",
+                    }}
+                  />
                 </div>
-                <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
-                  Warehouse Packaged & Serial Checked
-                </h4>
-                <p className="text-[11px] font-medium text-slate-500">
-                  Olaya Central Hub • Quality inspection completed
-                </p>
-              </div>
-
-              {/* Step 4 */}
-              <div className="relative">
-                <div
-                  className={`w-4 h-4 rounded-full flex items-center justify-center absolute -left-[25px] top-0.5 ${
-                    selectedOrderTracking.status === "delivered"
-                      ? "bg-emerald-600 text-white"
-                      : selectedOrderTracking.status === "dispatched" ||
-                          selectedOrderTracking.status === "ready_for_pickup"
-                        ? "bg-amber-400 text-slate-950"
-                        : "bg-slate-300 text-slate-600"
-                  }`}
-                >
-                  <Truck className="w-2.5 h-2.5" />
-                </div>
-                <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
-                  {selectedOrderTracking.fulfillmentType === "takeaway"
-                    ? "Ready at Riyadh Main Store"
-                    : "In Transit with Courier"}
-                </h4>
-                <p className="text-[11px] font-medium text-slate-500">
-                  {selectedOrderTracking.fulfillmentType === "takeaway"
-                    ? "Ready for pickup at Olaya Computer Market"
-                    : "Handed over to SMSA Express for KSA Delivery"}
-                </p>
-              </div>
-
-              {/* Step 5 */}
-              <div className="relative">
-                <div
-                  className={`w-4 h-4 rounded-full flex items-center justify-center absolute -left-[25px] top-0.5 ${
-                    selectedOrderTracking.status === "delivered"
-                      ? "bg-emerald-600 text-white"
-                      : "bg-slate-200 text-slate-400"
-                  }`}
-                >
-                  <CheckCircle2 className="w-2.5 h-2.5" />
-                </div>
-                <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
-                  Delivery / Collection Completed
-                </h4>
-                <p className="text-[11px] font-medium text-slate-500">
-                  {selectedOrderTracking.status === "delivered"
-                    ? "Successfully signed and delivered"
-                    : "Pending final delivery confirmation"}
-                </p>
               </div>
             </div>
 
             <button
               onClick={() => setSelectedOrderTracking(null)}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold py-3.5 rounded-xl uppercase tracking-wider transition cursor-pointer"
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer"
             >
-              Close Live Tracking
+              Close Tracker
             </button>
           </div>
         </div>
       )}
 
-      {/* 2. ZATCA VAT Tax Invoice Printable Modal */}
+      {/* VAT Invoice Preview Modal */}
       {selectedInvoiceOrder && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-10 space-y-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200 my-8">
-            {/* Modal Top Actions */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 no-print">
-              <span className="text-xs font-black uppercase text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-                ZATCA Tax Invoice Preview
-              </span>
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="bg-[#15803d] hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Tax Invoice</span>
-                </button>
-                <button
-                  onClick={() => setSelectedInvoiceOrder(null)}
-                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <Logo href="/" size="sm" />
+                <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  ZATCA VAT Tax Invoice
+                </span>
               </div>
-            </div>
-
-            {/* Official Printable Tax Invoice Layout */}
-            <div className="space-y-6 text-slate-900 font-sans print:p-0">
-              {/* Header Box */}
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-200">
-                <div className="space-y-1">
-                  <h2 className="text-xl font-black tracking-tight text-slate-950 uppercase">
-                    samud<span className="text-emerald-600">.</span>shabkat
-                  </h2>
-                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    SAMUD SHABKAT FOR TRADING & HARDWARE LTD.
-                  </p>
-                  <p className="text-[10px] text-slate-500 font-medium">
-                    Commercial Reg (CR): 1010884920 • VAT ID: 300928174900003
-                  </p>
-                  <p className="text-[10px] text-slate-500 font-medium">
-                    Olaya Computer Market, Building 14, Riyadh, Kingdom of Saudi
-                    Arabia
-                  </p>
-                </div>
-
-                <div className="text-left sm:text-right space-y-1">
-                  <span className="inline-block bg-slate-900 text-white text-xs font-black px-3 py-1 rounded uppercase tracking-wider">
-                    ZATCA TAX INVOICE
-                  </span>
-                  <div className="text-xs font-extrabold text-slate-900 pt-1">
-                    Invoice #:{" "}
-                    <span className="font-mono">
-                      INV-{selectedInvoiceOrder.orderNumber}
-                    </span>
-                  </div>
-                  <div className="text-[11px] font-medium text-slate-500">
-                    Date: {selectedInvoiceOrder.date}
-                  </div>
-                </div>
-              </div>
-
-              {/* Customer & Payment Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-xs">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-                    Billed & Delivered To:
-                  </span>
-                  <span className="font-extrabold text-slate-900 block">
-                    {selectedInvoiceOrder.customerName}
-                  </span>
-                  <span className="font-semibold text-slate-600 block">
-                    Phone: {selectedInvoiceOrder.customerPhone}
-                  </span>
-                  {selectedInvoiceOrder.shippingAddress && (
-                    <span className="font-medium text-slate-500 block">
-                      Address: {selectedInvoiceOrder.shippingAddress}
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-1 sm:text-right">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-                    Payment & Fulfillment Details:
-                  </span>
-                  <span className="font-extrabold text-emerald-800 block">
-                    Method: {selectedInvoiceOrder.paymentMethod}
-                  </span>
-                  <span className="font-semibold text-slate-600 block">
-                    Status: {selectedInvoiceOrder.paymentStatus.toUpperCase()}
-                  </span>
-                  <span className="font-medium text-slate-500 block">
-                    Type:{" "}
-                    {selectedInvoiceOrder.fulfillmentType === "takeaway"
-                      ? "Store Pickup"
-                      : "Express Delivery"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Itemized Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b-2 border-slate-900 text-[10px] font-black uppercase tracking-wider text-slate-600">
-                      <th className="py-2.5 px-2">Item Description</th>
-                      <th className="py-2.5 px-2">SKU</th>
-                      <th className="py-2.5 px-2 text-center">Qty</th>
-                      <th className="py-2.5 px-2 text-right">Unit Price</th>
-                      <th className="py-2.5 px-2 text-right">VAT (15%)</th>
-                      <th className="py-2.5 px-2 text-right">Total (SAR)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                    {selectedInvoiceOrder.items.map((item) => {
-                      const itemSubtotal = item.price * item.quantity;
-                      const itemVat = itemSubtotal * 0.15;
-                      const itemTotal = itemSubtotal + itemVat;
-                      return (
-                        <tr key={item.id}>
-                          <td className="py-3 px-2 font-bold text-slate-950">
-                            {item.name}
-                          </td>
-                          <td className="py-3 px-2 font-mono text-[11px] text-slate-500">
-                            {item.sku}
-                          </td>
-                          <td className="py-3 px-2 text-center font-bold">
-                            {item.quantity}
-                          </td>
-                          <td className="py-3 px-2 text-right">
-                            SAR{" "}
-                            {item.price.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </td>
-                          <td className="py-3 px-2 text-right text-slate-500">
-                            SAR{" "}
-                            {itemVat.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </td>
-                          <td className="py-3 px-2 text-right font-black text-slate-950">
-                            SAR{" "}
-                            {itemTotal.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Totals & ZATCA QR Box */}
-              <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t-2 border-slate-900 gap-6">
-                {/* Simulated ZATCA QR Code */}
-                <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <div className="w-16 h-16 bg-slate-900 p-1 rounded flex items-center justify-center text-white shrink-0">
-                    <div className="grid grid-cols-3 gap-0.5 w-full h-full p-1 bg-white">
-                      <div className="bg-slate-900" />
-                      <div className="bg-white" />
-                      <div className="bg-slate-900" />
-                      <div className="bg-white" />
-                      <div className="bg-slate-900" />
-                      <div className="bg-white" />
-                      <div className="bg-slate-900" />
-                      <div className="bg-slate-900" />
-                      <div className="bg-slate-900" />
-                    </div>
-                  </div>
-                  <div className="text-[10px] space-y-0.5 text-slate-500 font-medium">
-                    <span className="font-bold text-slate-900 block">
-                      ZATCA Compliant Invoice
-                    </span>
-                    <span>Verified Saudi Tax Timestamp</span>
-                    <span className="block font-mono text-[9px]">
-                      ID: 300928174900003
-                    </span>
-                  </div>
-                </div>
-
-                {/* Final Calculation Table */}
-                <div className="w-full sm:w-64 space-y-1.5 text-xs font-bold text-slate-700">
-                  <div className="flex justify-between">
-                    <span>Subtotal (Excl. VAT):</span>
-                    <span>
-                      SAR{" "}
-                      {selectedInvoiceOrder.subtotalAmount.toLocaleString(
-                        "en-US",
-                        { minimumFractionDigits: 2 },
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-500">
-                    <span>VAT (15% Saudi Tax):</span>
-                    <span>
-                      SAR{" "}
-                      {selectedInvoiceOrder.vatAmount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm font-black text-slate-950 pt-2 border-t border-slate-200">
-                    <span>Grand Total:</span>
-                    <span>
-                      SAR{" "}
-                      {selectedInvoiceOrder.totalAmount.toLocaleString(
-                        "en-US",
-                        { minimumFractionDigits: 2 },
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex justify-end no-print">
               <button
                 onClick={() => setSelectedInvoiceOrder(null)}
-                className="bg-slate-900 text-white text-xs font-extrabold px-6 py-2.5 rounded-xl uppercase tracking-wider cursor-pointer"
+                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
-                Close Preview
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase">
+                    Invoice Details
+                  </span>
+                  <p className="font-black text-slate-900 mt-0.5">
+                    Invoice #: {selectedInvoiceOrder.orderNumber}
+                  </p>
+                  <p className="text-slate-500">
+                    Date: {new Date(selectedInvoiceOrder.createdAt).toLocaleString()}
+                  </p>
+                  <p className="text-slate-500">
+                    Payment Method: {selectedInvoiceOrder.paymentMethod}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase">
+                    Customer Details
+                  </span>
+                  <p className="font-black text-slate-900 mt-0.5">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-slate-500">{user?.email}</p>
+                  <p className="text-slate-500">{selectedInvoiceOrder.contactPhone}</p>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="divide-y divide-slate-100">
+                <div className="grid grid-cols-12 font-black uppercase text-[10px] text-slate-400 pb-2">
+                  <span className="col-span-6">Item Description</span>
+                  <span className="col-span-2 text-center">Qty</span>
+                  <span className="col-span-2 text-right">Price</span>
+                  <span className="col-span-2 text-right">Total</span>
+                </div>
+                {(selectedInvoiceOrder.items || []).map((item) => (
+                  <div key={item.id} className="grid grid-cols-12 py-2 text-xs font-semibold">
+                    <span className="col-span-6 text-slate-900 font-bold truncate">
+                      {item.productName}
+                    </span>
+                    <span className="col-span-2 text-center text-slate-600">
+                      {item.quantity}
+                    </span>
+                    <span className="col-span-2 text-right text-slate-600">
+                      SAR {Number(item.unitPrice).toFixed(2)}
+                    </span>
+                    <span className="col-span-2 text-right font-black text-slate-900">
+                      SAR {(Number(item.unitPrice) * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Summary */}
+              <div className="border-t border-slate-200 pt-3 space-y-1.5 text-right font-bold">
+                <div className="flex justify-between text-slate-500 text-xs">
+                  <span>Subtotal (Excl. VAT):</span>
+                  <span>
+                    SAR {(Number(selectedInvoiceOrder.totalAmount) / 1.15).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-slate-500 text-xs">
+                  <span>ZATCA VAT (15%):</span>
+                  <span>
+                    SAR{" "}
+                    {(
+                      Number(selectedInvoiceOrder.totalAmount) -
+                      Number(selectedInvoiceOrder.totalAmount) / 1.15
+                    ).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-slate-950 text-sm font-black pt-1 border-t border-slate-100">
+                  <span>Total Amount (SAR):</span>
+                  <span>SAR {Number(selectedInvoiceOrder.totalAmount).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => window.print()}
+                className="flex-1 py-2.5 bg-[#15803d] hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Tax Invoice</span>
+              </button>
+              <button
+                onClick={() => setSelectedInvoiceOrder(null)}
+                className="py-2.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold transition cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>

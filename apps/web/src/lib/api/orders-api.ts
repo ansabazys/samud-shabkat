@@ -83,48 +83,71 @@ export interface CreateOrderPayload {
 
 export const ordersApi = {
   async getOrders(params?: OrderQueryParams): Promise<PaginatedOrdersResponse> {
-    const res = await api.get<{
-      success: boolean;
-      data: PaginatedOrdersResponse;
-    }>("/orders", { params });
-    return res.data.data;
+    const res = await api.get<any>("/orders", { params });
+    const payload = res.data?.data ?? res.data;
+    if (Array.isArray(payload)) {
+      return {
+        data: payload,
+        total: payload.length,
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+        totalPages: 1,
+      };
+    }
+    return {
+      data: Array.isArray(payload?.data) ? payload.data : [],
+      total: payload?.total ?? (Array.isArray(payload?.data) ? payload.data.length : 0),
+      page: payload?.page ?? 1,
+      limit: payload?.limit ?? 20,
+      totalPages: payload?.totalPages ?? 1,
+    };
+  },
+
+  async getMyOrders(params?: OrderQueryParams): Promise<PaginatedOrdersResponse> {
+    const res = await api.get<any>("/orders/my-orders", { params });
+    const payload = res.data?.data ?? res.data;
+    if (Array.isArray(payload)) {
+      return {
+        data: payload,
+        total: payload.length,
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+        totalPages: 1,
+      };
+    }
+    return {
+      data: Array.isArray(payload?.data) ? payload.data : [],
+      total: payload?.total ?? (Array.isArray(payload?.data) ? payload.data.length : 0),
+      page: payload?.page ?? 1,
+      limit: payload?.limit ?? 20,
+      totalPages: payload?.totalPages ?? 1,
+    };
   },
 
   async getOrderById(id: string): Promise<OrderRecord> {
-    const res = await api.get<{ success: boolean; data: OrderRecord }>(
-      `/orders/${id}`,
-    );
-    return res.data.data;
+    const res = await api.get<any>(`/orders/${id}`);
+    return res.data?.data ?? res.data;
   },
 
   async createOrder(payload: CreateOrderPayload): Promise<OrderRecord> {
-    const res = await api.post<{ success: boolean; data: OrderRecord }>(
-      "/orders",
-      payload,
-    );
-    return res.data.data;
+    const res = await api.post<any>("/orders", payload);
+    return res.data?.data ?? res.data;
   },
 
   async updateOrderStatus(
     id: string,
     orderStatus: string,
   ): Promise<OrderRecord> {
-    const res = await api.patch<{ success: boolean; data: OrderRecord }>(
-      `/orders/${id}/status`,
-      { orderStatus },
-    );
-    return res.data.data;
+    const res = await api.patch<any>(`/orders/${id}/status`, { orderStatus });
+    return res.data?.data ?? res.data;
   },
 
   async updatePaymentStatus(
     id: string,
     paymentStatus: string,
   ): Promise<OrderRecord> {
-    const res = await api.patch<{ success: boolean; data: OrderRecord }>(
-      `/orders/${id}/payment-status`,
-      { paymentStatus },
-    );
-    return res.data.data;
+    const res = await api.patch<any>(`/orders/${id}/payment-status`, { paymentStatus });
+    return res.data?.data ?? res.data;
   },
 
   async collectCash(
@@ -132,10 +155,7 @@ export const ordersApi = {
     paymentMethod = "CASH",
     notes?: string,
   ): Promise<OrderRecord> {
-    const res = await api.post<{ success: boolean; data: OrderRecord }>(
-      `/orders/${id}/collect-cash`,
-      { paymentMethod, notes },
-    );
-    return res.data.data;
+    const res = await api.post<any>(`/orders/${id}/collect-cash`, { paymentMethod, notes });
+    return res.data?.data ?? res.data;
   },
 };

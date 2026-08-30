@@ -9,9 +9,15 @@ dotenv.config({
   ],
 });
 
+let dbUrl = process.env.DATABASE_URL ?? "";
+if (dbUrl.includes("-pooler.")) {
+  dbUrl = dbUrl.replace("-pooler.", ".");
+}
+
 export default defineConfig({
   schema: "./src/schema",
   out: "./src/migrations",
   dialect: "postgresql",
-  dbCredentials: { url: process.env.DATABASE_URL ?? "" },
+  dbCredentials: { url: dbUrl },
 });
+

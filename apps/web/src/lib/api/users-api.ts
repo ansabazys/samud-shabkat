@@ -51,34 +51,39 @@ export interface UpdateUserInput {
 
 export const usersApi = {
   async getUsers(params?: UserQueryParams): Promise<PaginatedUsersResponse> {
-    const res = await api.get<{
-      success: boolean;
-      data: PaginatedUsersResponse;
-    }>("/users", { params });
-    return res.data.data;
+    const res = await api.get<any>("/users", { params });
+    const payload = res.data?.data ?? res.data;
+    if (Array.isArray(payload)) {
+      return {
+        data: payload,
+        total: payload.length,
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+        totalPages: 1,
+      };
+    }
+    return {
+      data: Array.isArray(payload?.data) ? payload.data : [],
+      total: payload?.total ?? (Array.isArray(payload?.data) ? payload.data.length : 0),
+      page: payload?.page ?? 1,
+      limit: payload?.limit ?? 20,
+      totalPages: payload?.totalPages ?? 1,
+    };
   },
 
   async getUserById(id: string): Promise<UserRecord> {
-    const res = await api.get<{ success: boolean; data: UserRecord }>(
-      `/users/${id}`,
-    );
-    return res.data.data;
+    const res = await api.get<any>(`/users/${id}`);
+    return res.data?.data ?? res.data;
   },
 
   async createUser(input: CreateUserInput): Promise<UserRecord> {
-    const res = await api.post<{ success: boolean; data: UserRecord }>(
-      "/users",
-      input,
-    );
-    return res.data.data;
+    const res = await api.post<any>("/users", input);
+    return res.data?.data ?? res.data;
   },
 
   async updateUser(id: string, input: UpdateUserInput): Promise<UserRecord> {
-    const res = await api.patch<{ success: boolean; data: UserRecord }>(
-      `/users/${id}`,
-      input,
-    );
-    return res.data.data;
+    const res = await api.patch<any>(`/users/${id}`, input);
+    return res.data?.data ?? res.data;
   },
 
   async deactivateUser(id: string): Promise<void> {

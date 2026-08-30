@@ -2,6 +2,7 @@ import { productRepository } from "../repositories/product.repository.js";
 import { categoryRepository } from "../../categories/repositories/category.repository.js";
 import { brandRepository } from "../../brands/repositories/brand.repository.js";
 import { slugify } from "../../../common/utils.js";
+import { cacheService } from "../../cache/cache.service.js";
 import type {
   CreateProductInput,
   UpdateProductInput,
@@ -11,17 +12,36 @@ import type {
 
 export class ProductService {
   async getProducts(params: ProductQueryParams) {
-    return productRepository.findAll(params);
+    const cacheKey = `products:list:${JSON.stringify(params)}`;
+    return cacheService.getOrSet(
+      cacheKey,
+      () => productRepository.findAll(params),
+      120, // 2 minutes TTL
+    );
   }
 
-  async getProductById(id: string) {
-    const product = await productRepository.findById(id);
-    if (!product) {
-      const error = new Error("Product not found");
-      Object.assign(error, { statusCode: 404 });
-      throw error;
-    }
-    return product;
+  async getProductById(idOrSlug: string) {
+    const cacheKey = `products:detail:${idOrSlug}`;
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const isUuid =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            idOrSlug,
+          );
+        const product = isUuid
+          ? await productRepository.findById(idOrSlug)
+          : await productRepository.findBySlug(idOrSlug);
+
+        if (!product) {
+          const error = new Error("Product not found");
+          Object.assign(error, { statusCode: 404 });
+          throw error;
+        }
+        return product;
+      },
+      300, // 5 minutes TTL
+    );
   }
 
   async createProduct(input: CreateProductInput) {
@@ -61,6 +81,7 @@ export class ProductService {
       slug,
     });
 
+    cacheService.invalidateCatalog();
     return this.getProductById(inserted.id);
   }
 
@@ -108,18 +129,22 @@ export class ProductService {
       ...(slug ? { slug } : {}),
     });
 
+    cacheService.invalidateCatalog();
     return this.getProductById(id);
   }
 
   async deleteProduct(id: string) {
     await this.getProductById(id);
     await productRepository.softDelete(id);
+    cacheService.invalidateCatalog();
     return { message: "Product deleted successfully" };
   }
 
   async addImage(productId: string, imageData: AddProductImageInput) {
     await this.getProductById(productId);
-    return productRepository.addImage(productId, imageData);
+    const result = await productRepository.addImage(productId, imageData);
+    cacheService.invalidateCatalog();
+    return result;
   }
 
   async removeImage(productId: string, imageId: string) {
@@ -130,6 +155,7 @@ export class ProductService {
       Object.assign(error, { statusCode: 404 });
       throw error;
     }
+    cacheService.invalidateCatalog();
     return { message: "Product image removed successfully" };
   }
 }

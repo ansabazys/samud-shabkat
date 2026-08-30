@@ -12,3 +12,16 @@ export async function authenticate(request: FastifyRequest): Promise<void> {
     throw authError;
   }
 }
+
+export async function optionalAuthenticate(
+  request: FastifyRequest,
+): Promise<void> {
+  try {
+    const authHeader = request.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      await request.jwtVerify();
+    }
+  } catch {
+    (request as any).user = null;
+  }
+}

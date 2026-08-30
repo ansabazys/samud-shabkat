@@ -104,7 +104,7 @@ export default function ProductDetailsPage({
   }
 
   const price = Number(product.price);
-  const inStock = product.stockStatus === "IN_STOCK" || product.stockStatus === "LOW_STOCK";
+  const inStock = product.stockStatus ? product.stockStatus !== "OUT_OF_STOCK" : product.isActive !== false;
   const installmentAmount = (price / 4).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const galleryImages = (product.images ?? []).map((img) => ({

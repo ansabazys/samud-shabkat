@@ -16,6 +16,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { Logo } from "@/components/ui/logo";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -37,15 +38,11 @@ export function AdminSidebar() {
       <div>
         {/* Brand Header */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <Link href="/admin" className="flex items-center gap-2 group">
-            <div>
-              <span className="text-lg font-black text-slate-950 uppercase tracking-tight">
-                Samud<span className="text-[#15803d]">Shabkat</span>
-              </span>
-              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase tracking-wider block mt-1 w-fit">
-                Backoffice Admin
-              </span>
-            </div>
+          <Link href="/admin" className="flex flex-col gap-1 group">
+            <Logo href="/admin" size="sm" />
+            <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase tracking-wider block mt-1 w-fit">
+              Backoffice Admin
+            </span>
           </Link>
         </div>
 
@@ -92,7 +89,10 @@ export function AdminSidebar() {
         </Link>
 
         <button
-          onClick={logout}
+          onClick={() => {
+            logout();
+            window.location.href = "/admin/login";
+          }}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
         >
           <LogOut className="w-4 h-4 text-rose-500" />

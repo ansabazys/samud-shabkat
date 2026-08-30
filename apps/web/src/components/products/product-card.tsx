@@ -8,8 +8,12 @@ import { useCartStore } from "@/store/cart-store";
 export interface ProductItem {
   id: string;
   name: string;
+  slug?: string;
+  sku?: string;
   category: string;
+  categoryId?: string;
   brand: string;
+  brandId?: string;
   tag?: string;
   discount?: string;
   badge?: string;
@@ -31,15 +35,17 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
+  const productUrl = `/products/${product.slug || product.id}`;
+
   const handleAddToCart = () => {
     addItem({
       id: product.id,
       name: product.name,
-      slug: product.id,
-      sku: product.id,
+      slug: product.slug || product.id,
+      sku: product.sku || product.id,
       price: product.price,
-      categoryId: "cat-1",
-      brandId: "brand-1",
+      categoryId: product.categoryId || "cat-1",
+      brandId: product.brandId || "brand-1",
       isActive: true,
       images: [{ id: "img-1", url: product.image, isPrimary: true }],
     });
@@ -50,7 +56,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
     }, 1500);
   };
 
-  const installmentAmount = (product.price / 4).toLocaleString("en-US", {
+  const installmentAmount = (product.price / 4).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -66,11 +72,11 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               </span>
             )}
             <Link
-              href={`/products/${product.id}`}
+              href={productUrl}
               className="block w-full h-full"
             >
               <img
-                src={product.image}
+                src={product.image || "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop"}
                 alt={product.name}
                 className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-500"
               />
@@ -85,7 +91,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
             </div>
 
             <Link
-              href={`/products/${product.id}`}
+              href={productUrl}
               className="text-sm sm:text-base font-extrabold text-slate-900 hover:text-emerald-700 transition-colors line-clamp-2 leading-snug"
             >
               {product.name}
@@ -93,7 +99,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
 
             <div className="flex items-center gap-1 text-xs text-slate-500">
               <div className="flex items-center gap-0.5">
-                {[...Array(product.rating)].map((_, i) => (
+                {[...Array(product.rating || 5)].map((_, i) => (
                   <Star
                     key={i}
                     className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
@@ -101,11 +107,11 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
                 ))}
               </div>
               <span className="font-bold text-slate-600">
-                ({product.reviewsCount} reviews)
+                ({product.reviewsCount || 12} reviews)
               </span>
             </div>
 
-            {product.specs && (
+            {product.specs && product.specs.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {product.specs.map((spec) => (
                   <span
@@ -124,28 +130,22 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
           <div className="text-left sm:text-right">
             {product.originalPrice && (
               <span className="text-xs font-semibold text-slate-400 line-through block">
-                SAR{" "}
-                {product.originalPrice.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                })}
+                ₹{product.originalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </span>
             )}
             <span className="text-lg font-black text-slate-950 block">
-              SAR{" "}
-              {product.price.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              ₹{product.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded inline-block mt-1">
-              4x SAR {installmentAmount} with Tabby
+              4x ₹{installmentAmount} with Tabby
             </span>
           </div>
 
           <div className="flex items-center gap-2">
             <Link
-              href={`/products/${product.id}`}
+              href={productUrl}
               className="p-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 transition"
-              title="Quick View"
+              title="View Product Details"
             >
               <Eye className="w-4 h-4" />
             </Link>
@@ -176,7 +176,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   }
 
   return (
-    <div className="group bg-white border border-slate-200/90 hover:border-emerald-400 rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-300 shadow-2xs hover:shadow-lg relative cursor-pointer">
+    <div className="group bg-white border border-slate-200/90 hover:border-emerald-400 rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-300 shadow-2xs hover:shadow-lg relative">
       {/* Top Image & Badges */}
       <div className="relative aspect-square w-full rounded-xl bg-slate-50 border border-slate-100 p-3 overflow-hidden mb-3">
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
@@ -196,9 +196,9 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
           )}
         </div>
 
-        <Link href={`/products/${product.id}`} className="block w-full h-full">
+        <Link href={productUrl} className="block w-full h-full">
           <img
-            src={product.image}
+            src={product.image || "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop"}
             alt={product.name}
             className="w-full h-full object-cover rounded-lg group-hover:scale-106 transition-transform duration-500"
           />
@@ -208,21 +208,21 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       {/* Rating & Category */}
       <div className="flex items-center justify-between gap-1 mb-1.5 text-[11px] font-bold text-slate-500">
         <div className="flex items-center gap-0.5">
-          {[...Array(product.rating)].map((_, i) => (
+          {[...Array(product.rating || 5)].map((_, i) => (
             <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
           ))}
           <span className="ml-1 text-[10px] font-semibold text-slate-400">
-            ({product.reviewsCount})
+            ({product.reviewsCount || 18})
           </span>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
+        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 truncate max-w-[100px]">
           {product.category}
         </span>
       </div>
 
       {/* Product Title */}
       <Link
-        href={`/products/${product.id}`}
+        href={productUrl}
         className="text-xs sm:text-sm font-bold text-slate-900 hover:text-emerald-700 line-clamp-2 leading-snug transition-colors mb-3 flex-1"
       >
         {product.name}
@@ -234,17 +234,11 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
           <div className="flex flex-col">
             {product.originalPrice && (
               <span className="text-[10px] font-semibold text-slate-400 line-through">
-                SAR{" "}
-                {product.originalPrice.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                })}
+                ₹{product.originalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </span>
             )}
             <span className="text-xs sm:text-sm font-black text-slate-950">
-              SAR{" "}
-              {product.price.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              ₹{product.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
           </div>
 
@@ -269,7 +263,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
         <div className="text-[9.5px] font-bold text-slate-500 bg-slate-50 border border-slate-200/60 px-2 py-1 rounded text-center">
           Or 4x{" "}
           <span className="font-extrabold text-emerald-700">
-            SAR {installmentAmount}
+            ₹{installmentAmount}
           </span>{" "}
           with Tabby
         </div>

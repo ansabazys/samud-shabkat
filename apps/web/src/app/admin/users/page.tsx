@@ -79,10 +79,12 @@ export default function AdminUsersPage() {
       };
 
       const res = await usersApi.getUsers(params);
-      setUsers(res.data);
-      setTotal(res.total);
+      const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setUsers(items);
+      setTotal(typeof res?.total === "number" ? res.total : items.length);
     } catch (err: any) {
       console.error("Failed to load users:", err);
+      setUsers([]);
       setError(
         err?.response?.data?.message || err?.message || "Failed to load user list.",
       );
@@ -327,7 +329,7 @@ export default function AdminUsersPage() {
             <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
             <span className="text-xs text-slate-500 font-medium">Fetching accounts database...</span>
           </div>
-        ) : users.length === 0 ? (
+        ) : (users || []).length === 0 ? (
           <div className="py-16 text-center text-xs text-slate-500 font-medium">
             No user records match the selected filters.
           </div>
@@ -345,7 +347,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
-                {users.map((u) => (
+                {(users || []).map((u) => (
                   <tr key={u.id} className="hover:bg-slate-50 transition">
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">

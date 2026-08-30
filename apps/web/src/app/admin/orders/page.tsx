@@ -65,16 +65,18 @@ export default function AdminOrdersPage() {
       };
 
       const res = await ordersApi.getOrders(params);
-      setOrders(res.data);
-      setTotal(res.total);
+      const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setOrders(items);
+      setTotal(typeof res?.total === "number" ? res.total : items.length);
 
       // Auto open drawer if highlightOrderId is present in query
       if (highlightOrderId && !selectedOrder) {
-        const found = res.data.find((o) => o.id === highlightOrderId);
+        const found = items.find((o) => o.id === highlightOrderId);
         if (found) setSelectedOrder(found);
       }
     } catch (err: any) {
       console.error("Failed to load orders:", err);
+      setOrders([]);
       setError(
         err?.response?.data?.message || err?.message || "Failed to load order list.",
       );
@@ -234,7 +236,7 @@ export default function AdminOrdersPage() {
             <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
             <span className="text-xs text-slate-500 font-medium">Fetching orders database...</span>
           </div>
-        ) : orders.length === 0 ? (
+        ) : (orders || []).length === 0 ? (
           <div className="py-16 text-center text-xs text-slate-500 font-medium">
             No orders match the selected filters.
           </div>
@@ -253,7 +255,7 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
-                {orders.map((ord) => (
+                {(orders || []).map((ord) => (
                   <tr
                     key={ord.id}
                     className={`hover:bg-slate-50 transition ${

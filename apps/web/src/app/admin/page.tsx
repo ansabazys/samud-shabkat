@@ -68,9 +68,21 @@ export default function AdminDashboardPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3 text-red-800 text-xs font-bold shadow-2xs">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-          <span>{error}</span>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-red-800 text-xs font-bold shadow-2xs">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+            <span>{error}</span>
+          </div>
+          {error.toLowerCase().includes("token") ||
+          error.toLowerCase().includes("auth") ||
+          error.toLowerCase().includes("expired") ? (
+            <Link
+              href="/admin/login"
+              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0"
+            >
+              Sign In to Admin Portal
+            </Link>
+          ) : null}
         </div>
       )}
 

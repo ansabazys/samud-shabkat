@@ -18,8 +18,11 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx src/seed/index.ts"
+    "db:migrate": "tsx src/migrate.ts",
+    "db:push": "drizzle-kit push",
+    "db:seed": "tsx src/seed/index.ts",
+    "db:check": "tsx src/test-connection.ts",
+    "db:inspect": "tsx src/inspect-db.ts"
   },
   "dependencies": {
     "@samud/config": "workspace:*",
@@ -31,7 +34,6 @@
     "@types/node": "^22.15.19",
     "drizzle-kit": "^0.31.1",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
-    "drizzle-kit": "^0.31.1"
+    "typescript": "^5.8.3"
   }
 }

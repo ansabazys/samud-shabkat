@@ -63,10 +63,12 @@ export default function AdminBrandsPage() {
       };
 
       const res = await brandsApi.getBrands(params);
-      setBrands(res.data);
-      setTotal(res.total);
+      const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setBrands(items);
+      setTotal(typeof res?.total === "number" ? res.total : items.length);
     } catch (err: any) {
       console.error("Failed to load brands:", err);
+      setBrands([]);
       setError(
         err?.response?.data?.message || err?.message || "Failed to load brand list.",
       );
@@ -290,7 +292,7 @@ export default function AdminBrandsPage() {
             <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
             <span className="text-xs text-slate-500 font-medium">Loading brands database...</span>
           </div>
-        ) : brands.length === 0 ? (
+        ) : (brands || []).length === 0 ? (
           <div className="py-16 text-center text-xs text-slate-500 font-medium">
             No brands found.
           </div>
@@ -306,7 +308,7 @@ export default function AdminBrandsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
-                {brands.map((b) => (
+                {(brands || []).map((b) => (
                   <tr key={b.id} className="hover:bg-slate-50 transition">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">

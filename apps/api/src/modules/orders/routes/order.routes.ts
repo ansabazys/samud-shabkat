@@ -13,15 +13,15 @@ import {
   type UpdatePaymentStatusInput,
   type CollectCashInput,
 } from "../schemas/order.schema.js";
-import { authenticate } from "../../../middleware/auth.middleware.js";
+import { authenticate, optionalAuthenticate } from "../../../middleware/auth.middleware.js";
 import { requireRole } from "../../../middleware/rbac.middleware.js";
 
 export async function orderRoutes(app: FastifyInstance) {
-  // Public / Customer routes (authenticated)
+  // Customer / Guest Order Placement route
   app.post<{ Body: CreateOrderInput }>(
     "/",
     {
-      preHandler: [authenticate],
+      preHandler: [optionalAuthenticate],
       config: {
         rateLimit: {
           max: 20,

@@ -27,11 +27,15 @@ export const authApi = {
     email: string;
     password: string;
   }): Promise<LoginResponse> {
-    const res = await api.post<{ success: boolean; data: LoginResponse }>(
-      "/auth/login",
-      credentials,
-    );
-    return res.data.data;
+    const res = await api.post<any>("/auth/login", credentials);
+    const body = res.data?.data ?? res.data;
+    return {
+      user: body.user,
+      tokens: {
+        accessToken: body.accessToken ?? body.tokens?.accessToken,
+        refreshToken: body.refreshToken ?? body.tokens?.refreshToken,
+      },
+    };
   },
 
   async register(data: {
@@ -42,21 +46,28 @@ export const authApi = {
     companyName?: string;
     phone?: string;
   }): Promise<LoginResponse> {
-    const res = await api.post<{ success: boolean; data: LoginResponse }>(
-      "/auth/register",
-      data,
-    );
-    return res.data.data;
+    const res = await api.post<any>("/auth/register", data);
+    const body = res.data?.data ?? res.data;
+    return {
+      user: body.user,
+      tokens: {
+        accessToken: body.accessToken ?? body.tokens?.accessToken,
+        refreshToken: body.refreshToken ?? body.tokens?.refreshToken,
+      },
+    };
   },
 
   async me(): Promise<UserProfile> {
-    const res = await api.get<{ success: boolean; data: UserProfile }>(
-      "/auth/me",
-    );
-    return res.data.data;
+    const res = await api.get<any>("/auth/me");
+    const body = res.data?.data ?? res.data;
+    return body.user ?? body;
   },
 
   async logout(): Promise<void> {
-    await api.post("/auth/logout");
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // Ignore network errors on logout
+    }
   },
 };

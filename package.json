@@ -9,7 +9,12 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:check": "pnpm --filter @samud/database db:check",
+    "db:generate": "pnpm --filter @samud/database db:generate",
+    "db:migrate": "pnpm --filter @samud/database db:migrate",
+    "db:push": "pnpm --filter @samud/database db:push",
+    "db:seed": "pnpm --filter @samud/database db:seed"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

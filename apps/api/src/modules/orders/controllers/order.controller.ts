@@ -48,18 +48,43 @@ export class OrderController {
     request: FastifyRequest<{ Body: CreateOrderInput }>,
     reply: FastifyReply,
   ) {
-    const userId = request.user?.id;
-    if (!userId) {
-      return reply
-        .status(401)
-        .send({ success: false, message: "Unauthorized" });
+    try {
+      let userId = request.user?.id;
+      if (!userId) {
+        const notesStr = request.body.notes || "";
+        const emailMatch = notesStr.match(/Email:\s*([^\s;,\n]+)/i);
+        const nameMatch = notesStr.match(/Customer:\s*([^.\n]+)/i);
+
+        const guestEmail =
+          (request.body as any).customerEmail ||
+          emailMatch?.[1] ||
+          `customer-${Date.now()}@samudshabkat.com`;
+        const guestName =
+          (request.body as any).customerName ||
+          nameMatch?.[1]?.trim() ||
+          "Store Customer";
+
+        const guestUser = await orderService.findOrCreateGuestUser(
+          guestEmail,
+          guestName,
+          request.body.contactPhone,
+        );
+        userId = guestUser.id;
+      }
+
+      const order = await orderService.createOrder(userId, request.body);
+      return reply.status(201).send({
+        success: true,
+        message: "Order created successfully",
+        data: order,
+      });
+    } catch (err: any) {
+      request.log.error(err);
+      return reply.status(err.statusCode || 400).send({
+        success: false,
+        message: err.message || "Failed to create order",
+      });
     }
-    const order = await orderService.createOrder(userId, request.body);
-    return reply.status(201).send({
-      success: true,
-      message: "Order created successfully",
-      data: order,
-    });
   }
 
   async updateOrderStatus(

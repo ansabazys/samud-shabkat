@@ -2,7 +2,7 @@ export const AUTH_CONSTANTS = {
   COOKIE_NAME: "refreshToken",
   COOKIE_PATH: "/api/v1/auth",
   COOKIE_MAX_AGE: 30 * 24 * 60 * 60, // 30 days in seconds
-  ACCESS_TOKEN_EXPIRES_IN: "15m",
+  ACCESS_TOKEN_EXPIRES_IN: process.env.ACCESS_TOKEN_EXPIRES_IN || "2h",
   REFRESH_TOKEN_BYTES: 64,
   ARGON2_MEMORY_COST: 65536,
   ARGON2_TIME_COST: 3,

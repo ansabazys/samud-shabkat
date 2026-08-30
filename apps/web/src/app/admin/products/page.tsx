@@ -101,10 +101,12 @@ export default function AdminProductsPage() {
       };
 
       const res = await productsApi.getProducts(params);
-      setProducts(res.data);
-      setTotal(res.total);
+      const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setProducts(items);
+      setTotal(typeof res?.total === "number" ? res.total : items.length);
     } catch (err: any) {
       console.error("Failed to load products:", err);
+      setProducts([]);
       setError(
         err?.response?.data?.message || err?.message || "Failed to load product catalog.",
       );
@@ -449,7 +451,7 @@ export default function AdminProductsPage() {
             <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
             <span className="text-xs text-slate-500 font-medium">Fetching catalog database...</span>
           </div>
-        ) : products.length === 0 ? (
+        ) : (products || []).length === 0 ? (
           <div className="py-16 text-center text-xs text-slate-500 font-medium">
             No products match the selected filters.
           </div>
@@ -467,7 +469,7 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
-                {products.map((p) => {
+                {(products || []).map((p) => {
                   const primaryImg = p.images?.find((i) => i.isPrimary)?.url || p.images?.[0]?.url;
                   return (
                     <tr key={p.id} className="hover:bg-slate-50 transition">

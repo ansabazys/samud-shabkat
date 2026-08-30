@@ -10,6 +10,8 @@ import {
   Headphones,
 } from "lucide-react";
 
+import { Logo } from "@/components/ui/logo";
+
 export function Footer() {
   return (
     <footer className="w-full bg-[#F4F5F7] border-t border-slate-200/80 font-sans text-slate-900 mt-16 pt-10 pb-12">
@@ -65,11 +67,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12 pb-8 border-b border-slate-200/80">
           {/* Column 1: Brand Summary */}
           <div className="space-y-3">
-            <Link href="/" className="inline-block">
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 font-sans">
-                samud<span className="text-amber-500">.</span>shabkat
-              </span>
-            </Link>
+            <Logo href="/" size="md" />
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
               Saudi Arabia’s premier distributor of enterprise networking
               equipment, servers, computers, workstations, and high-performance

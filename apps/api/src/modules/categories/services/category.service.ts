@@ -1,5 +1,6 @@
 import { categoryRepository } from "../repositories/category.repository.js";
 import { slugify } from "../../../common/utils.js";
+import { cacheService } from "../../cache/cache.service.js";
 import type {
   CreateCategoryInput,
   UpdateCategoryInput,
@@ -8,17 +9,29 @@ import type {
 
 export class CategoryService {
   async getCategories(params: CategoryQueryParams) {
-    return categoryRepository.findAll(params);
+    const cacheKey = `categories:list:${JSON.stringify(params)}`;
+    return cacheService.getOrSet(
+      cacheKey,
+      () => categoryRepository.findAll(params),
+      600, // 10 mins TTL
+    );
   }
 
   async getCategoryById(id: string) {
-    const category = await categoryRepository.findById(id);
-    if (!category) {
-      const error = new Error("Category not found");
-      Object.assign(error, { statusCode: 404 });
-      throw error;
-    }
-    return category;
+    const cacheKey = `categories:detail:${id}`;
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const category = await categoryRepository.findById(id);
+        if (!category) {
+          const error = new Error("Category not found");
+          Object.assign(error, { statusCode: 404 });
+          throw error;
+        }
+        return category;
+      },
+      600,
+    );
   }
 
   async createCategory(input: CreateCategoryInput) {
@@ -30,10 +43,13 @@ export class CategoryService {
       slug = `${slug}-${Date.now().toString(36)}`;
     }
 
-    return categoryRepository.create({
+    const created = await categoryRepository.create({
       ...input,
       slug,
     });
+
+    cacheService.invalidateCatalog();
+    return created;
   }
 
   async updateCategory(id: string, input: UpdateCategoryInput) {
@@ -48,15 +64,19 @@ export class CategoryService {
       }
     }
 
-    return categoryRepository.update(id, {
+    const updated = await categoryRepository.update(id, {
       ...input,
       ...(slug ? { slug } : {}),
     });
+
+    cacheService.invalidateCatalog();
+    return updated;
   }
 
   async deleteCategory(id: string) {
     await this.getCategoryById(id);
     await categoryRepository.softDelete(id);
+    cacheService.invalidateCatalog();
     return { message: "Category deleted successfully" };
   }
 }

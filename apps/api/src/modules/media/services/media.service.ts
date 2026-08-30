@@ -1,20 +1,58 @@
-import { randomUUID } from "node:crypto";
 import type { UploadFolder } from "../schemas/media.schema.js";
+import { CloudinaryStorageProvider } from "./storage/cloudinary.provider.js";
+import { R2StorageProvider } from "./storage/r2.provider.js";
+import { LocalStorageProvider } from "./storage/local.provider.js";
+import type { IStorageProvider, StorageUploadResult } from "./storage/storage.types.js";
 
-export interface UploadedFileResult {
-  id: string;
-  key: string;
-  url: string;
-  filename: string;
-  mimetype: string;
-  size: number;
-  folder: UploadFolder;
-  createdAt: string;
-}
+export type UploadedFileResult = StorageUploadResult;
 
 export class MediaService {
-  private publicCdnBaseUrl =
-    process.env.R2_PUBLIC_URL || "https://cdn.samudshabkat.com";
+  private cloudinaryProvider: CloudinaryStorageProvider;
+  private r2Provider: R2StorageProvider;
+  private localProvider: LocalStorageProvider;
+
+  constructor() {
+    this.cloudinaryProvider = new CloudinaryStorageProvider();
+    this.r2Provider = new R2StorageProvider();
+    this.localProvider = new LocalStorageProvider();
+  }
+
+  /**
+   * Resolves which storage provider should be used:
+   * 1. Explicit `STORAGE_PROVIDER` ("cloudinary" | "r2" | "local")
+   * 2. In production -> default to Cloudflare R2 or Cloudinary if available
+   * 3. In development / fallback -> Local Disk Storage
+   */
+  getStorageProvider(): IStorageProvider {
+    const preference = process.env.STORAGE_PROVIDER?.toLowerCase();
+
+    if (preference === "cloudinary" && this.cloudinaryProvider.isAvailable()) {
+      return this.cloudinaryProvider;
+    }
+    if (preference === "r2" && this.r2Provider.isAvailable()) {
+      return this.r2Provider;
+    }
+    if (preference === "local") {
+      return this.localProvider;
+    }
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (isProduction && this.r2Provider.isAvailable()) {
+      return this.r2Provider;
+    }
+
+    if (this.cloudinaryProvider.isAvailable()) {
+      return this.cloudinaryProvider;
+    }
+
+    if (this.r2Provider.isAvailable()) {
+      return this.r2Provider;
+    }
+
+    // Default to local disk storage so real uploads work seamlessly
+    return this.localProvider;
+  }
 
   async processAndUploadFile(
     fileBuffer: Buffer,
@@ -22,71 +60,38 @@ export class MediaService {
     mimetype: string,
     folder: UploadFolder = "products",
   ): Promise<UploadedFileResult> {
-    const fileId = randomUUID();
-    const timestamp = Date.now();
-    const cleanExt = originalFilename.includes(".")
-      ? originalFilename.split(".").pop()?.toLowerCase()
-      : "png";
+    const provider = this.getStorageProvider();
 
-    const key = `${folder}/${fileId}-${timestamp}.${cleanExt}`;
-    const size = fileBuffer.length;
-
-    // Check if Cloudflare R2 / S3 environment variables are provided
-    const r2AccountId = process.env.R2_ACCOUNT_ID;
-    const r2AccessKeyId = process.env.R2_ACCESS_KEY_ID;
-    const r2SecretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-    const r2BucketName = process.env.R2_BUCKET_NAME;
-
-    let url = `${this.publicCdnBaseUrl}/${key}`;
-
-    if (r2AccountId && r2AccessKeyId && r2SecretAccessKey && r2BucketName) {
-      try {
-        // Dynamic optional import for Cloudflare R2 S3 API
-        const s3Module = (await import("@aws-sdk/client-s3" as string)) as {
-          S3Client: new (config: unknown) => {
-            send: (cmd: unknown) => Promise<unknown>;
-          };
-          PutObjectCommand: new (config: unknown) => unknown;
-        };
-
-        const s3 = new s3Module.S3Client({
-          region: "auto",
-          endpoint: `https://${r2AccountId}.r2.cloudflarestorage.com`,
-          credentials: {
-            accessKeyId: r2AccessKeyId,
-            secretAccessKey: r2SecretAccessKey,
-          },
+    try {
+      return await provider.upload({
+        fileBuffer,
+        originalFilename,
+        mimetype,
+        folder,
+      });
+    } catch (err) {
+      console.error(`[MediaService] Upload failed via ${provider.name}:`, err);
+      if (provider.name !== "local") {
+        console.log("[MediaService] Falling back to local disk storage...");
+        return await this.localProvider.upload({
+          fileBuffer,
+          originalFilename,
+          mimetype,
+          folder,
         });
-
-        await s3.send(
-          new s3Module.PutObjectCommand({
-            Bucket: r2BucketName,
-            Key: key,
-            Body: fileBuffer,
-            ContentType: mimetype,
-          }),
-        );
-      } catch (err) {
-        console.warn("[MediaService] Cloudflare R2 upload fallback:", err);
       }
-    } else {
-      // High-quality hardware preview fallback for development
-      if (mimetype.startsWith("image/")) {
-        url =
-          "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1000&auto=format&fit=crop";
-      }
+      throw err;
     }
+  }
 
-    return {
-      id: fileId,
-      key,
-      url,
-      filename: originalFilename,
-      mimetype,
-      size,
-      folder,
-      createdAt: new Date().toISOString(),
-    };
+  async deleteFile(key: string, providerName?: string): Promise<boolean> {
+    if (providerName === "cloudinary" || (!providerName && this.cloudinaryProvider.isAvailable())) {
+      return this.cloudinaryProvider.delete(key);
+    }
+    if (providerName === "r2" || (!providerName && this.r2Provider.isAvailable())) {
+      return this.r2Provider.delete(key);
+    }
+    return this.localProvider.delete(key);
   }
 }
 

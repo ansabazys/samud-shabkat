@@ -1,1 +1,1 @@
-export { authenticate } from "../modules/auth/index.js";
+export { authenticate, optionalAuthenticate } from "../modules/auth/index.js";

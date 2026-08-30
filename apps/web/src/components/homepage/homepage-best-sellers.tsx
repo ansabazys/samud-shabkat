@@ -42,7 +42,7 @@ export function HomepageBestSellers() {
           : products.map((product) => {
               const primaryImage = product.images?.find((img) => img.isPrimary) ?? product.images?.[0];
               const price = Number(product.price);
-              const inStock = product.stockStatus === "IN_STOCK" || product.stockStatus === "LOW_STOCK";
+              const inStock = product.stockStatus ? product.stockStatus !== "OUT_OF_STOCK" : product.isActive !== false;
               return (
                 <div key={product.id} className="group bg-white border border-slate-200/80 hover:border-slate-300 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300 shadow-2xs hover:shadow-md relative">
                   <div className="flex items-center justify-between w-full mb-2 h-5">

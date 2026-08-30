@@ -20,6 +20,7 @@ import {
 import { useCartStore } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
 import { ordersApi, type CreateOrderPayload, type OrderRecord } from "@/lib/api/orders-api";
+import { Logo } from "@/components/ui/logo";
 
 const STORE_LOCATIONS = [
   {
@@ -181,14 +182,9 @@ export default function CheckoutPage() {
       {/* Checkout Header */}
       <div className="bg-white border-b border-slate-200/80 py-4 sm:py-6">
         <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="text-lg font-black text-slate-950 uppercase tracking-tight"
-            >
-              Samud<span className="text-[#15803d]">Shabkat</span>
-            </Link>
-            <span className="text-xs font-bold text-slate-400 border-l border-slate-200 pl-2">
+          <div className="flex items-center gap-3">
+            <Logo href="/" size="sm" />
+            <span className="text-xs font-bold text-slate-400 border-l border-slate-200 pl-3">
               Takeaway & Store Ordering
             </span>
           </div>

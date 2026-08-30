@@ -96,10 +96,14 @@ export class ProductRepository {
         categorySlug: categories.slug,
         brandName: brands.name,
         brandSlug: brands.slug,
+        currentStock: productInventory.currentStock,
+        reservedStock: productInventory.reservedStock,
+        minStock: productInventory.minStock,
       })
       .from(products)
       .innerJoin(categories, eq(products.categoryId, categories.id))
       .innerJoin(brands, eq(products.brandId, brands.id))
+      .leftJoin(productInventory, eq(products.id, productInventory.productId))
       .where(whereClause)
       .orderBy(orderDirection)
       .limit(limit)
@@ -126,20 +130,44 @@ export class ProductRepository {
       );
     }
 
-    const data = rawProducts.map((item) => ({
-      ...item.product,
-      category: {
-        id: item.product.categoryId,
-        name: item.categoryName,
-        slug: item.categorySlug,
-      },
-      brand: {
-        id: item.product.brandId,
-        name: item.brandName,
-        slug: item.brandSlug,
-      },
-      images: imagesMap[item.product.id] ?? [],
-    }));
+    const data = rawProducts.map((item) => {
+      const currentStock = item.currentStock ?? 50;
+      const reservedStock = item.reservedStock ?? 0;
+      const availableStock = Math.max(0, currentStock - reservedStock);
+
+      let stockStatus: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" = "IN_STOCK";
+      if (
+        !item.product.isActive ||
+        (item.currentStock !== null &&
+          item.currentStock !== undefined &&
+          availableStock <= 0)
+      ) {
+        stockStatus = "OUT_OF_STOCK";
+      } else if (item.minStock && availableStock <= item.minStock) {
+        stockStatus = "LOW_STOCK";
+      } else {
+        stockStatus = "IN_STOCK";
+      }
+
+      return {
+        ...item.product,
+        category: {
+          id: item.product.categoryId,
+          name: item.categoryName,
+          slug: item.categorySlug,
+        },
+        brand: {
+          id: item.product.brandId,
+          name: item.brandName,
+          slug: item.brandSlug,
+        },
+        images: imagesMap[item.product.id] ?? [],
+        currentStock,
+        reservedStock,
+        availableStock,
+        stockStatus,
+      };
+    });
 
     return {
       data,
@@ -159,14 +187,36 @@ export class ProductRepository {
         categorySlug: categories.slug,
         brandName: brands.name,
         brandSlug: brands.slug,
+        currentStock: productInventory.currentStock,
+        reservedStock: productInventory.reservedStock,
+        minStock: productInventory.minStock,
       })
       .from(products)
       .innerJoin(categories, eq(products.categoryId, categories.id))
       .innerJoin(brands, eq(products.brandId, brands.id))
+      .leftJoin(productInventory, eq(products.id, productInventory.productId))
       .where(and(eq(products.id, id), isNull(products.deletedAt)))
       .limit(1);
 
     if (!result) return null;
+
+    const currentStock = result.currentStock ?? 50;
+    const reservedStock = result.reservedStock ?? 0;
+    const availableStock = Math.max(0, currentStock - reservedStock);
+
+    let stockStatus: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" = "IN_STOCK";
+    if (
+      !result.product.isActive ||
+      (result.currentStock !== null &&
+        result.currentStock !== undefined &&
+        availableStock <= 0)
+    ) {
+      stockStatus = "OUT_OF_STOCK";
+    } else if (result.minStock && availableStock <= result.minStock) {
+      stockStatus = "LOW_STOCK";
+    } else {
+      stockStatus = "IN_STOCK";
+    }
 
     const images = await database
       .select()
@@ -187,17 +237,77 @@ export class ProductRepository {
         slug: result.brandSlug,
       },
       images,
+      currentStock,
+      reservedStock,
+      availableStock,
+      stockStatus,
     };
   }
 
   async findBySlug(slug: string) {
-    const [record] = await getDb()
-      .select()
+    const database = getDb();
+    const [result] = await database
+      .select({
+        product: products,
+        categoryName: categories.name,
+        categorySlug: categories.slug,
+        brandName: brands.name,
+        brandSlug: brands.slug,
+        currentStock: productInventory.currentStock,
+        reservedStock: productInventory.reservedStock,
+        minStock: productInventory.minStock,
+      })
       .from(products)
+      .innerJoin(categories, eq(products.categoryId, categories.id))
+      .innerJoin(brands, eq(products.brandId, brands.id))
+      .leftJoin(productInventory, eq(products.id, productInventory.productId))
       .where(and(eq(products.slug, slug), isNull(products.deletedAt)))
       .limit(1);
 
-    return record ?? null;
+    if (!result) return null;
+
+    const currentStock = result.currentStock ?? 50;
+    const reservedStock = result.reservedStock ?? 0;
+    const availableStock = Math.max(0, currentStock - reservedStock);
+
+    let stockStatus: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" = "IN_STOCK";
+    if (
+      !result.product.isActive ||
+      (result.currentStock !== null &&
+        result.currentStock !== undefined &&
+        availableStock <= 0)
+    ) {
+      stockStatus = "OUT_OF_STOCK";
+    } else if (result.minStock && availableStock <= result.minStock) {
+      stockStatus = "LOW_STOCK";
+    } else {
+      stockStatus = "IN_STOCK";
+    }
+
+    const images = await database
+      .select()
+      .from(productImages)
+      .where(eq(productImages.productId, result.product.id))
+      .orderBy(asc(productImages.sortOrder));
+
+    return {
+      ...result.product,
+      category: {
+        id: result.product.categoryId,
+        name: result.categoryName,
+        slug: result.categorySlug,
+      },
+      brand: {
+        id: result.product.brandId,
+        name: result.brandName,
+        slug: result.brandSlug,
+      },
+      images,
+      currentStock,
+      reservedStock,
+      availableStock,
+      stockStatus,
+    };
   }
 
   async findBySku(sku: string) {
@@ -245,7 +355,7 @@ export class ProductRepository {
 
       await tx.insert(productInventory).values({
         productId: insertedProduct.id,
-        currentStock: 0,
+        currentStock: (data as any).initialStock ?? 50,
         reservedStock: 0,
         reorderLevel: 10,
       });

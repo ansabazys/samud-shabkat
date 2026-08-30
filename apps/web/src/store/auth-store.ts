@@ -21,8 +21,12 @@ export const useAuthStore = create<AuthState>()(
       isAdmin: false,
       setAuth: (user, tokens) => {
         if (typeof window !== "undefined") {
-          localStorage.setItem("accessToken", tokens.accessToken);
-          localStorage.setItem("refreshToken", tokens.refreshToken);
+          if (tokens.accessToken) {
+            localStorage.setItem("accessToken", tokens.accessToken);
+          }
+          if (tokens.refreshToken) {
+            localStorage.setItem("refreshToken", tokens.refreshToken);
+          }
         }
         const isAdminRole =
           user.role === "ADMIN" ||
@@ -60,6 +64,28 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "samud-auth-storage",
+      onRehydrateStorage: () => (state) => {
+        if (state && typeof window !== "undefined") {
+          const accessToken = state.tokens?.accessToken;
+          const refreshToken = state.tokens?.refreshToken;
+
+          if (
+            !accessToken ||
+            !refreshToken ||
+            accessToken.startsWith("demo-") ||
+            refreshToken.startsWith("demo-") ||
+            accessToken === "undefined" ||
+            refreshToken === "undefined"
+          ) {
+            if (state.isAuthenticated) {
+              state.logout();
+            }
+          } else {
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
+          }
+        }
+      },
     },
   ),
 );
