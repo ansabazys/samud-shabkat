@@ -56,13 +56,11 @@ export class OrderController {
         const nameMatch = notesStr.match(/Customer:\s*([^.\n]+)/i);
 
         const guestEmail =
-          (request.body as any).customerEmail ||
+          emailMatch?.[1] ||
           emailMatch?.[1] ||
           `customer-${Date.now()}@samudshabkat.com`;
         const guestName =
-          (request.body as any).customerName ||
-          nameMatch?.[1]?.trim() ||
-          "Store Customer";
+          nameMatch?.[1]?.trim() || nameMatch?.[1]?.trim() || "Store Customer";
 
         const guestUser = await orderService.findOrCreateGuestUser(
           guestEmail,
@@ -78,11 +76,17 @@ export class OrderController {
         message: "Order created successfully",
         data: order,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       request.log.error(err);
-      return reply.status(err.statusCode || 400).send({
+      const error = err as { statusCode?: unknown; message?: unknown };
+      const status =
+        typeof error.statusCode === "number" ? error.statusCode : 400;
+      return reply.status(status).send({
         success: false,
-        message: err.message || "Failed to create order",
+        message:
+          typeof error.message === "string"
+            ? error.message
+            : "Failed to create order",
       });
     }
   }

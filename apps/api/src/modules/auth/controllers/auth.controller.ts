@@ -74,7 +74,9 @@ export class AuthController {
         });
       }
 
-      const result = await this.authService.refresh(validation.data.refreshToken);
+      const result = await this.authService.refresh(
+        validation.data.refreshToken,
+      );
 
       reply.setCookie(AUTH_CONSTANTS.COOKIE_NAME, result.refreshToken, {
         path: AUTH_CONSTANTS.COOKIE_PATH,
@@ -85,11 +87,20 @@ export class AuthController {
       });
 
       return reply.status(200).send(result);
-    } catch (err: any) {
-      const status = err?.statusCode && err.statusCode >= 400 && err.statusCode < 500 ? err.statusCode : 401;
+    } catch (err: unknown) {
+      const error = err as { statusCode?: unknown; message?: unknown };
+      const status =
+        typeof error.statusCode === "number" &&
+        error.statusCode >= 400 &&
+        error.statusCode < 500
+          ? error.statusCode
+          : 401;
       return reply.status(status).send({
         statusCode: status,
-        message: err?.message || "Invalid or expired refresh token",
+        message:
+          typeof error.message === "string"
+            ? error.message
+            : "Invalid or expired refresh token",
       });
     }
   }

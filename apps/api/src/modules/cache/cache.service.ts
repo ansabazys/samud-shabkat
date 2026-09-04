@@ -4,7 +4,7 @@ interface CacheEntry<T> {
 }
 
 export class CacheService {
-  private store = new Map<string, CacheEntry<any>>();
+  private store = new Map<string, CacheEntry<unknown>>();
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {

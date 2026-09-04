@@ -355,7 +355,7 @@ export class ProductRepository {
 
       await tx.insert(productInventory).values({
         productId: insertedProduct.id,
-        currentStock: (data as any).initialStock ?? 50,
+        currentStock: data.initialStock ?? 50,
         reservedStock: 0,
         reorderLevel: 10,
       });

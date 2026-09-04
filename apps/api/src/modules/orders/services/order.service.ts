@@ -15,6 +15,7 @@ import type {
 
 export class OrderService {
   async findOrCreateGuestUser(email: string, fullName: string, phone?: string) {
+    void phone;
     const database = getDb();
     const cleanEmail = email.trim().toLowerCase();
     const [existing] = await database

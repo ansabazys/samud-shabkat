@@ -22,6 +22,6 @@ export async function optionalAuthenticate(
       await request.jwtVerify();
     }
   } catch {
-    (request as any).user = null;
+    // Authentication is optional; leave the request unauthenticated.
   }
 }
