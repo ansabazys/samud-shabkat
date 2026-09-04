@@ -1,6 +1,7 @@
 "use client";
 
 import { Star, CheckCircle2, ThumbsUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface Review {
   id: string;
