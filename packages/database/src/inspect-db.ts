@@ -16,17 +16,25 @@ async function main() {
     console.log("📊 Existing Tables:", tables);
 
     for (const t of tables) {
-      if (t.table_schema === 'public') {
-        const count = await client`SELECT COUNT(*) FROM ${client(t.table_name)}`;
+      if (t.table_schema === "public") {
+        const count =
+          await client`SELECT COUNT(*) FROM ${client(t.table_name)}`;
         console.log(`Table ${t.table_name}: ${count[0].count} rows`);
       }
     }
 
     try {
-      const migrations = await client`SELECT * FROM drizzle.__drizzle_migrations ORDER BY created_at ASC;`;
-      console.log("📜 Applied Migrations in drizzle.__drizzle_migrations:", migrations);
-    } catch (e: any) {
-      console.log("⚠️ Could not read drizzle.__drizzle_migrations:", e.message);
+      const migrations =
+        await client`SELECT * FROM drizzle.__drizzle_migrations ORDER BY created_at ASC;`;
+      console.log(
+        "📜 Applied Migrations in drizzle.__drizzle_migrations:",
+        migrations,
+      );
+    } catch (e: unknown) {
+      console.log(
+        "⚠️ Could not read drizzle.__drizzle_migrations:",
+        e instanceof Error ? e.message : String(e),
+      );
     }
   } catch (err) {
     console.error("Error inspecting database:", err);

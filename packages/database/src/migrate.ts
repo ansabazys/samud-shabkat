@@ -39,13 +39,15 @@ async function main() {
     const migrationsDir = path.resolve(
       fs.existsSync(path.resolve(process.cwd(), "src/migrations"))
         ? path.resolve(process.cwd(), "src/migrations")
-        : path.resolve(process.cwd(), "packages/database/src/migrations")
+        : path.resolve(process.cwd(), "packages/database/src/migrations"),
     );
     const journalPath = path.join(migrationsDir, "meta", "_journal.json");
     const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
 
-    const applied = await sql`SELECT hash FROM drizzle.__drizzle_migrations;`;
-    const appliedTags = new Set(applied.map((r: any) => r.hash));
+    const applied = await sql<
+      { hash: string }[]
+    >`SELECT hash FROM drizzle.__drizzle_migrations;`;
+    const appliedTags = new Set(applied.map((row) => row.hash));
 
     for (const entry of journal.entries) {
       const tag = entry.tag;
