@@ -9,54 +9,56 @@ import {
   Truck,
   Headphones,
 } from "lucide-react";
-
+import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui/logo";
 
 export function Footer() {
+  const t = useTranslations("footer");
+
   return (
     <footer className="w-full bg-[#F4F5F7] border-t border-slate-200/80 font-sans text-slate-900 mt-16 pt-10 pb-12">
       <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
         {/* Top Feature Guarantee Bar */}
         <div className="bg-white border-2 border-[#FFD400] rounded-2xl p-5 mb-10 shadow-2xs">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x rtl:sm:divide-x-reverse divide-slate-100">
             <div className="flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-900 shrink-0">
                 <Truck className="w-6 h-6 stroke-[1.5]" />
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight">
-                  Fast KSA & GCC Shipping
+                  {t("guarantees.shippingTitle")}
                 </h4>
                 <p className="text-[11px] font-medium text-slate-500 mt-0.5">
-                  Express delivery across Riyadh, Jeddah & Dammam
+                  {t("guarantees.shippingDesc")}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:pl-6">
+            <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:ps-6">
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-900 shrink-0">
                 <ShieldCheck className="w-6 h-6 stroke-[1.5]" />
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight">
-                  100% Genuine Hardware
+                  {t("guarantees.genuineTitle")}
                 </h4>
                 <p className="text-[11px] font-medium text-slate-500 mt-0.5">
-                  Official manufacturer warranty guaranteed
+                  {t("guarantees.genuineDesc")}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:pl-6">
+            <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:ps-6">
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-900 shrink-0">
                 <Headphones className="w-6 h-6 stroke-[1.5]" />
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight">
-                  Dedicated B2B Support
+                  {t("guarantees.supportTitle")}
                 </h4>
                 <p className="text-[11px] font-medium text-slate-500 mt-0.5">
-                  Account managers & certified engineers on standby
+                  {t("guarantees.supportDesc")}
                 </p>
               </div>
             </div>
@@ -69,17 +71,15 @@ export function Footer() {
           <div className="space-y-3">
             <Logo href="/" size="md" />
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
-              Saudi Arabia’s premier distributor of enterprise networking
-              equipment, servers, computers, workstations, and high-performance
-              IT components.
+              {t("brandDescription")}
             </p>
           </div>
 
           {/* Column 2: Quick Links */}
           <div>
             <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight mb-4 relative inline-block">
-              Quick Links
-              <span className="absolute bottom-[-6px] left-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
+              {t("quickLinksTitle")}
+              <span className="absolute bottom-[-6px] start-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
             </h3>
             <ul className="space-y-2.5 text-xs font-semibold text-slate-600">
               <li>
@@ -87,7 +87,7 @@ export function Footer() {
                   href="/products"
                   className="hover:text-amber-600 transition"
                 >
-                  All Products Catalog
+                  {t("allProductsLink")}
                 </Link>
               </li>
               <li>
@@ -95,20 +95,23 @@ export function Footer() {
                   href="/products?deals=true"
                   className="hover:text-amber-600 transition"
                 >
-                  Hot Deals & Promotions
+                  {t("hotDealsLink")}
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/brands"
+                  href="/products"
                   className="hover:text-amber-600 transition"
                 >
-                  Featured Partner Brands
+                  {t("partnerBrandsLink")}
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-amber-600 transition">
-                  About Samud Shabkat
+                <Link
+                  href="/contact"
+                  className="hover:text-amber-600 transition"
+                >
+                  {t("aboutLink")}
                 </Link>
               </li>
             </ul>
@@ -117,8 +120,8 @@ export function Footer() {
           {/* Column 3: Hardware Categories */}
           <div>
             <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight mb-4 relative inline-block">
-              Hardware Categories
-              <span className="absolute bottom-[-6px] left-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
+              {t("categoriesTitle")}
+              <span className="absolute bottom-[-6px] start-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
             </h3>
             <ul className="space-y-2.5 text-xs font-semibold text-slate-600">
               <li>
@@ -126,7 +129,7 @@ export function Footer() {
                   href="/products?category=networking"
                   className="hover:text-amber-600 transition"
                 >
-                  Switches & Routers
+                  {t("switchesRouters")}
                 </Link>
               </li>
               <li>
@@ -134,7 +137,7 @@ export function Footer() {
                   href="/products?category=computers"
                   className="hover:text-amber-600 transition"
                 >
-                  Workstations & Laptops
+                  {t("workstationsLaptops")}
                 </Link>
               </li>
               <li>
@@ -142,7 +145,7 @@ export function Footer() {
                   href="/products?category=servers-nas"
                   className="hover:text-amber-600 transition"
                 >
-                  Rack Servers & NAS Storage
+                  {t("rackServersStorage")}
                 </Link>
               </li>
               <li>
@@ -150,7 +153,7 @@ export function Footer() {
                   href="/products?category=components"
                   className="hover:text-amber-600 transition"
                 >
-                  GPUs & Processors
+                  {t("gpusProcessors")}
                 </Link>
               </li>
             </ul>
@@ -159,21 +162,21 @@ export function Footer() {
           {/* Column 4: Contact Information */}
           <div>
             <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-tight mb-4 relative inline-block">
-              Contact Us
-              <span className="absolute bottom-[-6px] left-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
+              {t("contactTitle")}
+              <span className="absolute bottom-[-6px] start-0 w-full h-[2.5px] bg-[#FFD400] rounded-full" />
             </h3>
             <ul className="space-y-3 text-xs font-semibold text-slate-600">
               <li className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-slate-800 shrink-0 mt-0.5" />
-                <span>Olaya District, King Fahd Road, Riyadh, KSA</span>
+                <span>{t("addressText")}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-slate-800 shrink-0" />
-                <span>+966 11 234 5678</span>
+                <span dir="ltr">{t("phoneText")}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-slate-800 shrink-0" />
-                <span>sales@samudshabkat.com</span>
+                <span dir="ltr">{t("emailText")}</span>
               </li>
             </ul>
           </div>
@@ -181,10 +184,7 @@ export function Footer() {
 
         {/* Bottom Copyright Bar */}
         <div className="pt-6 text-center text-xs font-semibold text-slate-500">
-          <p>
-            © {new Date().getFullYear()} Samud Shabkat Technology Co. All rights
-            reserved.
-          </p>
+          <p>{t("copyright", { year: new Date().getFullYear() })}</p>
         </div>
       </div>
     </footer>

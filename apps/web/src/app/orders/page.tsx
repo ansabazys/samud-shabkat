@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ChevronRight,
+  ChevronLeft,
   Package,
   Clock,
   CheckCircle2,
@@ -22,15 +22,20 @@ import {
   Lock,
   User,
   AlertCircle,
-  Loader2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCartStore } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
+import { useLanguageStore } from "@/store/language-store";
 import { ordersApi, type OrderRecord } from "@/lib/api/orders-api";
 import { Logo } from "@/components/ui/logo";
 
 export default function OrdersPage() {
-  const router = useRouter();
+  const tOrders = useTranslations("orders");
+  const tCommon = useTranslations("common");
+  const language = useLanguageStore((state) => state.language);
+  const isRtl = language === "ar";
+
   const { user, isAuthenticated } = useAuthStore();
   const addItem = useCartStore((state) => state.addItem);
 
@@ -66,14 +71,22 @@ export default function OrdersPage() {
     try {
       const res = await ordersApi.getMyOrders({ limit: 50 });
       setOrders(res.data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch my orders:", err);
-      if (err?.response?.status === 401) {
+      const error = err as {
+        response?: { data?: { message?: unknown }; status?: number };
+        message?: unknown;
+      };
+      if (error.response?.status === 401) {
         useAuthStore.getState().logout();
         return;
       }
       setError(
-        err?.response?.data?.message || err?.message || "Failed to load orders",
+        typeof error.response?.data?.message === "string"
+          ? error.response.data.message
+          : typeof error.message === "string"
+            ? error.message
+            : "Failed to load orders",
       );
     } finally {
       setLoading(false);
@@ -91,7 +104,11 @@ export default function OrdersPage() {
   const handleCopyOrderNumber = (num: string) => {
     navigator.clipboard.writeText(num);
     setCopiedOrderId(num);
-    triggerToast(`Order number ${num} copied to clipboard!`);
+    triggerToast(
+      isRtl
+        ? `تم نسخ رقم الطلب ${num}`
+        : `Order number ${num} copied to clipboard!`,
+    );
     setTimeout(() => setCopiedOrderId(null), 2000);
   };
 
@@ -113,7 +130,9 @@ export default function OrdersPage() {
       );
     });
     triggerToast(
-      `All ${order.items.length} items from ${order.orderNumber} added to cart!`,
+      isRtl
+        ? `تمت إضافة عناصر الطلب ${order.orderNumber} إلى السلة!`
+        : `All items from ${order.orderNumber} added to cart!`,
     );
   };
 
@@ -167,8 +186,7 @@ export default function OrdersPage() {
   const deliveredCount = useMemo(
     () =>
       orders.filter(
-        (o) =>
-          o.orderStatus === "DELIVERED" || o.orderStatus === "COMPLETED",
+        (o) => o.orderStatus === "DELIVERED" || o.orderStatus === "COMPLETED",
       ).length,
     [orders],
   );
@@ -181,13 +199,19 @@ export default function OrdersPage() {
           <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-3">
               <Link href="/" className="hover:text-emerald-700 transition">
-                Home
+                {tCommon("home")}
               </Link>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-slate-900 font-extrabold">My Orders</span>
+              {isRtl ? (
+                <ChevronLeft className="w-3.5 h-3.5 text-slate-400" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              )}
+              <span className="text-slate-900 font-extrabold">
+                {tOrders("pageTitle")}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-950 uppercase tracking-tight">
-              My Orders & Purchases
+              {tOrders("pageTitle")}
             </h1>
           </div>
         </div>
@@ -200,26 +224,28 @@ export default function OrdersPage() {
 
             <div className="space-y-1.5">
               <h2 className="text-xl font-black text-slate-950 uppercase tracking-tight">
-                Sign In Required
+                {tCommon("login")}
               </h2>
               <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Please sign in with your account to view your past purchases, live tracking, and ZATCA tax invoices.
+                {isRtl
+                  ? "يرجى تسجيل الدخول لعرض قائمة طلباتك وتتبع الشحنات."
+                  : "Please sign in with your account to view your past purchases, live tracking, and ZATCA tax invoices."}
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
                 href="/login?redirect=/orders"
-                className="w-full sm:w-auto bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition shadow-2xs flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
               >
                 <User className="w-4 h-4" />
-                <span>Sign In Now</span>
+                <span>{tCommon("login")}</span>
               </Link>
               <Link
                 href="/register"
-                className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition flex items-center justify-center"
+                className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition flex items-center justify-center cursor-pointer"
               >
-                Create Account
+                {tCommon("register")}
               </Link>
             </div>
           </div>
@@ -232,7 +258,7 @@ export default function OrdersPage() {
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
       {/* Toast Alert Banner */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-6 end-6 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 border border-slate-700 animate-in fade-in duration-200">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -243,40 +269,50 @@ export default function OrdersPage() {
         <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-3">
             <Link href="/" className="hover:text-emerald-700 transition">
-              Home
+              {tCommon("home")}
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            {isRtl ? (
+              <ChevronLeft className="w-3.5 h-3.5 text-slate-400" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            )}
             <Link href="/profile" className="hover:text-emerald-700 transition">
-              My Profile
+              {tCommon("myAccount")}
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-900 font-extrabold">My Orders</span>
+            {isRtl ? (
+              <ChevronLeft className="w-3.5 h-3.5 text-slate-400" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            )}
+            <span className="text-slate-900 font-extrabold">
+              {tOrders("pageTitle")}
+            </span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-950 uppercase tracking-tight relative inline-block">
-                My Orders & Purchases
-                <span className="absolute bottom-[-8px] left-0 w-full h-[3px] bg-[#FFD400] rounded-full" />
+                {tOrders("pageTitle")}
+                <span className="absolute bottom-[-8px] start-0 w-full h-[3px] bg-[#FFD400] rounded-full" />
               </h1>
               <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-2">
-                Live order tracking, store takeaways, and official ZATCA VAT tax invoices.
+                {tOrders("pageSubtitle")}
               </p>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <Link
                 href="/products"
-                className="text-xs font-extrabold text-white bg-[#15803d] hover:bg-emerald-700 px-4 py-2.5 rounded-xl uppercase tracking-wider transition shadow-2xs flex items-center gap-1.5"
+                className="text-xs font-extrabold text-white bg-[#15803d] hover:bg-emerald-700 px-4 py-2.5 rounded-xl uppercase tracking-wider transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
-                <span>Browse Catalog</span>
+                <span>{tCommon("catalog")}</span>
               </Link>
               <Link
                 href="/profile"
-                className="text-xs font-extrabold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-xl border border-slate-200 transition"
+                className="text-xs font-extrabold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-xl border border-slate-200 transition cursor-pointer"
               >
-                Account Profile
+                {tCommon("myAccount")}
               </Link>
             </div>
           </div>
@@ -289,7 +325,7 @@ export default function OrdersPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
             <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-              Total Orders
+              {tOrders("tabs.all")}
             </span>
             <div className="flex items-baseline justify-between">
               <span className="text-xl sm:text-2xl font-black text-slate-950">
@@ -301,7 +337,7 @@ export default function OrdersPage() {
 
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
             <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-              Active Orders
+              {tOrders("tabs.active")}
             </span>
             <div className="flex items-baseline justify-between">
               <span className="text-xl sm:text-2xl font-black text-amber-600">
@@ -313,7 +349,7 @@ export default function OrdersPage() {
 
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
             <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-              Delivered
+              {tOrders("tabs.delivered")}
             </span>
             <div className="flex items-baseline justify-between">
               <span className="text-xl sm:text-2xl font-black text-emerald-700">
@@ -325,12 +361,12 @@ export default function OrdersPage() {
 
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
             <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-              Total Spent
+              {tCommon("total")}
             </span>
             <div className="flex items-baseline justify-between">
               <span className="text-lg sm:text-xl font-black text-slate-950">
-                SAR{" "}
-                {totalSpent.toLocaleString("en-US", {
+                {tCommon("currency")}{" "}
+                {totalSpent.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -345,10 +381,16 @@ export default function OrdersPage() {
           {/* Tab Filters */}
           <div className="flex items-center gap-2 border-b sm:border-b-0 border-slate-100 pb-2 sm:pb-0 w-full sm:w-auto overflow-x-auto no-scrollbar">
             {[
-              { id: "all", label: `All Orders (${orders.length})` },
-              { id: "in_progress", label: `Active (${activeCount})` },
-              { id: "delivered", label: `Delivered (${deliveredCount})` },
-              { id: "takeaway", label: "Takeaway Pickup" },
+              { id: "all", label: `${tOrders("tabs.all")} (${orders.length})` },
+              {
+                id: "in_progress",
+                label: `${tOrders("tabs.active")} (${activeCount})`,
+              },
+              {
+                id: "delivered",
+                label: `${tOrders("tabs.delivered")} (${deliveredCount})`,
+              },
+              { id: "takeaway", label: tOrders("tabs.takeaway") },
             ].map((tab) => {
               const isSelected = activeTab === tab.id;
               return (
@@ -371,12 +413,12 @@ export default function OrdersPage() {
           <div className="relative w-full sm:w-72">
             <input
               type="text"
-              placeholder="Search order # or SKU..."
+              placeholder={tCommon("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
+              className="w-full ps-9 pe-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
             />
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute start-3 top-2.5" />
           </div>
         </div>
 
@@ -403,7 +445,7 @@ export default function OrdersPage() {
               onClick={fetchOrders}
               className="underline font-bold hover:text-red-950 cursor-pointer"
             >
-              Retry
+              {tOrders("trackStatus")}
             </button>
           </div>
         )}
@@ -415,40 +457,26 @@ export default function OrdersPage() {
               <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-4 shadow-2xs">
                 <Package className="w-12 h-12 text-slate-300 mx-auto" />
                 <h3 className="text-base font-black text-slate-950 uppercase">
-                  No Orders Found
+                  {tOrders("noOrders")}
                 </h3>
                 <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto">
-                  {orders.length === 0
-                    ? "You haven't placed any orders yet. Start exploring our hardware catalog!"
-                    : "No purchases match your current search or filter."}
+                  {tOrders("noOrdersDesc")}
                 </p>
                 <div className="pt-2">
-                  {orders.length === 0 ? (
-                    <Link
-                      href="/products"
-                      className="bg-[#15803d] hover:bg-emerald-700 text-white text-xs font-extrabold px-6 py-2.5 rounded-xl uppercase tracking-wider transition inline-block"
-                    >
-                      Start Shopping
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setActiveTab("all");
-                        setSearchQuery("");
-                      }}
-                      className="bg-slate-900 text-white text-xs font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider cursor-pointer"
-                    >
-                      Clear Filters
-                    </button>
-                  )}
+                  <Link
+                    href="/products"
+                    className="bg-[#15803d] hover:bg-emerald-700 text-white text-xs font-extrabold px-6 py-2.5 rounded-xl uppercase tracking-wider transition inline-block"
+                  >
+                    {tOrders("startShopping")}
+                  </Link>
                 </div>
               </div>
             ) : (
               filteredOrders.map((order) => {
                 const totalAmt = Number(order.totalAmount || 0);
-                const subtotalAmt = totalAmt / 1.15;
-                const vatAmt = totalAmt - subtotalAmt;
-                const formattedDate = new Date(order.createdAt).toLocaleDateString("en-US", {
+                const formattedDate = new Date(
+                  order.createdAt,
+                ).toLocaleDateString(isRtl ? "ar-SA" : "en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
@@ -466,7 +494,9 @@ export default function OrdersPage() {
                           <span className="text-base font-black text-slate-950 uppercase tracking-tight flex items-center gap-1.5">
                             {order.orderNumber}
                             <button
-                              onClick={() => handleCopyOrderNumber(order.orderNumber)}
+                              onClick={() =>
+                                handleCopyOrderNumber(order.orderNumber)
+                              }
                               className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 transition cursor-pointer"
                               title="Copy Order Number"
                             >
@@ -482,12 +512,16 @@ export default function OrdersPage() {
                           {order.fulfillmentType === "STORE_PICKUP" ? (
                             <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-[10px] font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                               <Store className="w-3 h-3 text-emerald-700" />
-                              <span>STORE PICKUP</span>
+                              <span>
+                                {isRtl ? "استلام من الفرع" : "STORE PICKUP"}
+                              </span>
                             </span>
                           ) : (
                             <span className="bg-blue-50 text-blue-800 border border-blue-200/80 text-[10px] font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                               <Truck className="w-3 h-3 text-blue-700" />
-                              <span>HOME DELIVERY</span>
+                              <span>
+                                {isRtl ? "توصيل للمنزل" : "HOME DELIVERY"}
+                              </span>
                             </span>
                           )}
 
@@ -498,11 +532,12 @@ export default function OrdersPage() {
                         </div>
 
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 pt-0.5">
-                          <span>Placed on {formattedDate}</span>
+                          <span>
+                            {tOrders("placedOn", { date: formattedDate })}
+                          </span>
                           <span>•</span>
                           <span>
-                            {(order.items || []).length} Item
-                            {(order.items || []).length > 1 ? "s" : ""}
+                            {(order.items || []).length} {tCommon("item")}
                           </span>
                         </div>
                       </div>
@@ -512,37 +547,40 @@ export default function OrdersPage() {
                         {order.orderStatus === "PENDING" && (
                           <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
                             <Clock className="w-4 h-4 text-amber-700" />
-                            <span>PENDING</span>
+                            <span>{tOrders("status.pending")}</span>
                           </span>
                         )}
-                        {(order.orderStatus === "CONFIRMED" || order.orderStatus === "PROCESSING") && (
+                        {(order.orderStatus === "CONFIRMED" ||
+                          order.orderStatus === "PROCESSING") && (
                           <span className="bg-blue-600 text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
                             <Package className="w-4 h-4" />
-                            <span>PROCESSING</span>
+                            <span>{tOrders("status.processing")}</span>
                           </span>
                         )}
-                        {(order.orderStatus === "READY_FOR_PICKUP" || order.orderStatus === "READY_FOR_COLLECTION") && (
+                        {(order.orderStatus === "READY_FOR_PICKUP" ||
+                          order.orderStatus === "READY_FOR_COLLECTION") && (
                           <span className="bg-[#15803d] text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
                             <Store className="w-4 h-4" />
-                            <span>READY FOR PICKUP</span>
+                            <span>{tOrders("status.ready")}</span>
                           </span>
                         )}
                         {order.orderStatus === "OUT_FOR_DELIVERY" && (
                           <span className="bg-amber-500 text-slate-950 text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
                             <Truck className="w-4 h-4" />
-                            <span>OUT FOR DELIVERY</span>
+                            <span>{tOrders("status.outForDelivery")}</span>
                           </span>
                         )}
-                        {(order.orderStatus === "DELIVERED" || order.orderStatus === "COMPLETED") && (
+                        {(order.orderStatus === "DELIVERED" ||
+                          order.orderStatus === "COMPLETED") && (
                           <span className="bg-slate-900 text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>DELIVERED</span>
+                            <span>{tOrders("status.delivered")}</span>
                           </span>
                         )}
                         {order.orderStatus === "CANCELLED" && (
                           <span className="bg-red-600 text-white text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-wider shadow-2xs inline-flex items-center gap-1.5">
                             <X className="w-4 h-4" />
-                            <span>CANCELLED</span>
+                            <span>{tOrders("status.cancelled")}</span>
                           </span>
                         )}
                       </div>
@@ -572,14 +610,15 @@ export default function OrdersPage() {
                                   {item.productName}
                                 </span>
                                 <span className="text-xs font-semibold text-slate-500 block">
-                                  Qty: {item.quantity} × SAR {unitP.toFixed(2)}
+                                  {item.quantity} × {tCommon("currency")}{" "}
+                                  {unitP.toFixed(2)}
                                 </span>
                               </div>
                             </div>
 
                             <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
                               <span className="text-xs sm:text-sm font-black text-slate-950">
-                                SAR {totalP.toFixed(2)}
+                                {tCommon("currency")} {totalP.toFixed(2)}
                               </span>
                             </div>
                           </div>
@@ -591,10 +630,10 @@ export default function OrdersPage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between pt-4 border-t border-slate-100 gap-4">
                       <div className="space-y-0.5">
                         <span className="text-xs font-semibold text-slate-500">
-                          Total (15% ZATCA VAT Included):
+                          {tCommon("total")} ({tCommon("zatcaVatIncluded")}):
                         </span>
                         <div className="text-lg font-black text-slate-950">
-                          SAR {totalAmt.toFixed(2)}
+                          {tCommon("currency")} {totalAmt.toFixed(2)}
                         </div>
                       </div>
 
@@ -604,7 +643,7 @@ export default function OrdersPage() {
                           className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer"
                         >
                           <Truck className="w-3.5 h-3.5" />
-                          <span>Track Status</span>
+                          <span>{tOrders("trackStatus")}</span>
                         </button>
 
                         <button
@@ -612,7 +651,7 @@ export default function OrdersPage() {
                           className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          <span>VAT Invoice</span>
+                          <span>{tOrders("vatInvoice")}</span>
                         </button>
 
                         <button
@@ -620,7 +659,7 @@ export default function OrdersPage() {
                           className="px-4 py-2 bg-[#15803d] hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
-                          <span>Buy Again</span>
+                          <span>{tOrders("buyAgain")}</span>
                         </button>
                       </div>
                     </div>
@@ -639,7 +678,7 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                  Live Order Tracker
+                  {tOrders("trackStatus")}
                 </span>
                 <h3 className="text-lg font-black text-slate-950 uppercase">
                   {selectedOrderTracking.orderNumber}
@@ -656,23 +695,23 @@ export default function OrdersPage() {
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase">
-                  Destination / Pickup
+                  {isRtl ? "عنوان الاستلام / التوصيل" : "Destination / Pickup"}
                 </span>
                 <p className="text-xs font-bold text-slate-800">
                   {selectedOrderTracking.shippingAddress}
                 </p>
                 <p className="text-xs text-slate-500 font-medium">
-                  Contact Phone: {selectedOrderTracking.contactPhone}
+                  {tCommon("phone")}: {selectedOrderTracking.contactPhone}
                 </p>
               </div>
 
               {/* Progress Bar */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span>Order Placed</span>
-                  <span>Processing</span>
-                  <span>Dispatched</span>
-                  <span>Complete</span>
+                  <span>{tOrders("status.pending")}</span>
+                  <span>{tOrders("status.processing")}</span>
+                  <span>{tOrders("status.outForDelivery")}</span>
+                  <span>{tOrders("status.delivered")}</span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
@@ -682,11 +721,15 @@ export default function OrdersPage() {
                         selectedOrderTracking.orderStatus === "DELIVERED" ||
                         selectedOrderTracking.orderStatus === "COMPLETED"
                           ? "100%"
-                          : selectedOrderTracking.orderStatus === "OUT_FOR_DELIVERY" ||
-                              selectedOrderTracking.orderStatus === "READY_FOR_PICKUP"
+                          : selectedOrderTracking.orderStatus ===
+                                "OUT_FOR_DELIVERY" ||
+                              selectedOrderTracking.orderStatus ===
+                                "READY_FOR_PICKUP"
                             ? "75%"
-                            : selectedOrderTracking.orderStatus === "CONFIRMED" ||
-                                selectedOrderTracking.orderStatus === "PROCESSING"
+                            : selectedOrderTracking.orderStatus ===
+                                  "CONFIRMED" ||
+                                selectedOrderTracking.orderStatus ===
+                                  "PROCESSING"
                               ? "50%"
                               : "25%",
                     }}
@@ -699,7 +742,7 @@ export default function OrdersPage() {
               onClick={() => setSelectedOrderTracking(null)}
               className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer"
             >
-              Close Tracker
+              {tCommon("close")}
             </button>
           </div>
         </div>
@@ -713,7 +756,7 @@ export default function OrdersPage() {
               <div className="flex items-center gap-2">
                 <Logo href="/" size="sm" />
                 <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  ZATCA VAT Tax Invoice
+                  {tCommon("zatcaVatBadge")}
                 </span>
               </div>
               <button
@@ -728,68 +771,88 @@ export default function OrdersPage() {
               <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
                 <div>
                   <span className="text-[10px] font-extrabold text-slate-400 uppercase">
-                    Invoice Details
+                    {tOrders("vatInvoice")}
                   </span>
                   <p className="font-black text-slate-900 mt-0.5">
-                    Invoice #: {selectedInvoiceOrder.orderNumber}
+                    {isRtl ? "رقم الفاتورة" : "Invoice"}: #
+                    {selectedInvoiceOrder.orderNumber}
                   </p>
                   <p className="text-slate-500">
-                    Date: {new Date(selectedInvoiceOrder.createdAt).toLocaleString()}
+                    {new Date(selectedInvoiceOrder.createdAt).toLocaleString(
+                      isRtl ? "ar-SA" : "en-US",
+                    )}
                   </p>
                   <p className="text-slate-500">
-                    Payment Method: {selectedInvoiceOrder.paymentMethod}
+                    {selectedInvoiceOrder.paymentMethod}
                   </p>
                 </div>
                 <div>
                   <span className="text-[10px] font-extrabold text-slate-400 uppercase">
-                    Customer Details
+                    {isRtl ? "بيانات العميل" : "Customer Details"}
                   </span>
                   <p className="font-black text-slate-900 mt-0.5">
                     {user?.firstName} {user?.lastName}
                   </p>
                   <p className="text-slate-500">{user?.email}</p>
-                  <p className="text-slate-500">{selectedInvoiceOrder.contactPhone}</p>
+                  <p className="text-slate-500">
+                    {selectedInvoiceOrder.contactPhone}
+                  </p>
                 </div>
               </div>
 
               {/* Items Table */}
               <div className="divide-y divide-slate-100">
                 <div className="grid grid-cols-12 font-black uppercase text-[10px] text-slate-400 pb-2">
-                  <span className="col-span-6">Item Description</span>
-                  <span className="col-span-2 text-center">Qty</span>
-                  <span className="col-span-2 text-right">Price</span>
-                  <span className="col-span-2 text-right">Total</span>
+                  <span className="col-span-6">
+                    {isRtl ? "وصف المنتج" : "Item Description"}
+                  </span>
+                  <span className="col-span-2 text-center">
+                    {isRtl ? "الكمية" : "Qty"}
+                  </span>
+                  <span className="col-span-2 text-right rtl:text-left">
+                    {isRtl ? "السعر" : "Price"}
+                  </span>
+                  <span className="col-span-2 text-right rtl:text-left">
+                    {tCommon("total")}
+                  </span>
                 </div>
                 {(selectedInvoiceOrder.items || []).map((item) => (
-                  <div key={item.id} className="grid grid-cols-12 py-2 text-xs font-semibold">
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-12 py-2 text-xs font-semibold"
+                  >
                     <span className="col-span-6 text-slate-900 font-bold truncate">
                       {item.productName}
                     </span>
                     <span className="col-span-2 text-center text-slate-600">
                       {item.quantity}
                     </span>
-                    <span className="col-span-2 text-right text-slate-600">
-                      SAR {Number(item.unitPrice).toFixed(2)}
+                    <span className="col-span-2 text-right rtl:text-left text-slate-600">
+                      {tCommon("currency")} {Number(item.unitPrice).toFixed(2)}
                     </span>
-                    <span className="col-span-2 text-right font-black text-slate-900">
-                      SAR {(Number(item.unitPrice) * item.quantity).toFixed(2)}
+                    <span className="col-span-2 text-right rtl:text-left font-black text-slate-950">
+                      {tCommon("currency")}{" "}
+                      {(Number(item.unitPrice) * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
               </div>
 
               {/* Summary */}
-              <div className="border-t border-slate-200 pt-3 space-y-1.5 text-right font-bold">
+              <div className="border-t border-slate-200 pt-3 space-y-1.5 text-right rtl:text-left font-bold">
                 <div className="flex justify-between text-slate-500 text-xs">
-                  <span>Subtotal (Excl. VAT):</span>
+                  <span>{tCommon("subtotal")}:</span>
                   <span>
-                    SAR {(Number(selectedInvoiceOrder.totalAmount) / 1.15).toFixed(2)}
+                    {tCommon("currency")}{" "}
+                    {(Number(selectedInvoiceOrder.totalAmount) / 1.15).toFixed(
+                      2,
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-500 text-xs">
-                  <span>ZATCA VAT (15%):</span>
+                  <span>{tCommon("zatcaVatIncluded")}:</span>
                   <span>
-                    SAR{" "}
+                    {tCommon("currency")}{" "}
                     {(
                       Number(selectedInvoiceOrder.totalAmount) -
                       Number(selectedInvoiceOrder.totalAmount) / 1.15
@@ -797,8 +860,11 @@ export default function OrdersPage() {
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-950 text-sm font-black pt-1 border-t border-slate-100">
-                  <span>Total Amount (SAR):</span>
-                  <span>SAR {Number(selectedInvoiceOrder.totalAmount).toFixed(2)}</span>
+                  <span>{tCommon("total")}:</span>
+                  <span>
+                    {tCommon("currency")}{" "}
+                    {Number(selectedInvoiceOrder.totalAmount).toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -809,13 +875,15 @@ export default function OrdersPage() {
                 className="flex-1 py-2.5 bg-[#15803d] hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print Tax Invoice</span>
+                <span>
+                  {isRtl ? "طباعة الفاتورة الضريبية" : "Print Tax Invoice"}
+                </span>
               </button>
               <button
                 onClick={() => setSelectedInvoiceOrder(null)}
                 className="py-2.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold transition cursor-pointer"
               >
-                Close
+                {tCommon("close")}
               </button>
             </div>
           </div>

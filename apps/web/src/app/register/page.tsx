@@ -13,16 +13,24 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Eye,
   EyeOff,
   Loader2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuthStore } from "@/store/auth-store";
+import { useLanguageStore } from "@/store/language-store";
 import { authApi } from "@/lib/api/auth-api";
 import { Logo } from "@/components/ui/logo";
 
 function RegisterForm() {
+  const tAuth = useTranslations("auth");
+  const tCommon = useTranslations("common");
+  const language = useLanguageStore((state) => state.language);
+  const isRtl = language === "ar";
+
   const [accountType, setAccountType] = useState<"individual" | "corporate">(
     "individual",
   );
@@ -51,18 +59,28 @@ function RegisterForm() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match. Please verify your password entry.");
+      setError(
+        isRtl
+          ? "كلمتا المرور غير متطابقتين."
+          : "Passwords do not match. Please verify your password entry.",
+      );
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters long.");
+      setError(
+        isRtl
+          ? "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل."
+          : "Password must be at least 6 characters long.",
+      );
       return;
     }
 
     if (!agreeTerms) {
       setError(
-        "You must agree to the Terms of Service and Privacy Policy to register.",
+        isRtl
+          ? "يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة."
+          : "You must agree to the Terms of Service and Privacy Policy to register.",
       );
       return;
     }
@@ -75,12 +93,17 @@ function RegisterForm() {
         password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        companyName: accountType === "corporate" ? companyName.trim() : undefined,
+        companyName:
+          accountType === "corporate" ? companyName.trim() : undefined,
         phone: phone.trim(),
       });
 
       setAuth(response.user, response.tokens);
-      setSuccessMsg("Account created successfully! Redirecting...");
+      setSuccessMsg(
+        isRtl
+          ? "تم إنشاء الحساب بنجاح! جاري التحويل..."
+          : "Account created successfully! Redirecting...",
+      );
       setTimeout(() => {
         if (redirectUrl) {
           router.push(redirectUrl);
@@ -88,19 +111,32 @@ function RegisterForm() {
           router.push("/profile");
         }
       }, 700);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Registration error:", err);
+      const error = err as {
+        response?: {
+          data?: { message?: unknown; error?: unknown };
+          status?: number;
+        };
+        message?: unknown;
+      };
       const apiMsg =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message;
-      if (err?.response?.status === 409) {
-        setError("An account with this email address already exists. Please sign in.");
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message;
+      if (error.response?.status === 409) {
+        setError(
+          isRtl
+            ? "يوجد حساب مسجل بهذا البريد الإلكتروني مسبقاً. يرجى تسجيل الدخول."
+            : "An account with this email address already exists. Please sign in.",
+        );
       } else {
         setError(
           typeof apiMsg === "string"
             ? apiMsg
-            : "Failed to create account. Please check your details and try again.",
+            : isRtl
+              ? "فشل إنشاء الحساب. يرجى التحقق من البيانات والمحاولة مجدداً."
+              : "Failed to create account. Please check your details and try again.",
         );
       }
     } finally {
@@ -116,13 +152,12 @@ function RegisterForm() {
 
         <div className="space-y-1 w-full">
           <h1 className="text-2xl font-black text-slate-950 uppercase tracking-tight relative inline-block">
-            Create an Account
+            {tAuth("registerTitle")}
             <span className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-16 h-[3px] bg-[#FFD400] rounded-full" />
           </h1>
 
           <p className="text-xs text-slate-500 font-semibold pt-2">
-            Join Samud Shabkat for express KSA shipping, B2B wholesale
-            pricing, and instant ZATCA tax invoices.
+            {tAuth("registerSubtitle")}
           </p>
         </div>
       </div>
@@ -139,7 +174,7 @@ function RegisterForm() {
           }`}
         >
           <User className="w-3.5 h-3.5" />
-          <span>Individual</span>
+          <span>{tAuth("individualAccount")}</span>
         </button>
         <button
           type="button"
@@ -151,7 +186,7 @@ function RegisterForm() {
           }`}
         >
           <Building2 className="w-3.5 h-3.5 text-emerald-700" />
-          <span>Corporate B2B</span>
+          <span>{tAuth("corporateAccount")}</span>
         </button>
       </div>
 
@@ -176,7 +211,7 @@ function RegisterForm() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-              First Name
+              {tCommon("fullName")}
             </label>
             <input
               type="text"
@@ -190,7 +225,7 @@ function RegisterForm() {
 
           <div className="space-y-1.5">
             <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-              Last Name
+              {tCommon("fullName")} (Last)
             </label>
             <input
               type="text"
@@ -206,7 +241,7 @@ function RegisterForm() {
         {/* Email Address */}
         <div className="space-y-1.5">
           <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-            Email Address
+            {tAuth("email")}
           </label>
           <div className="relative">
             <input
@@ -215,16 +250,16 @@ function RegisterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ahmed@example.sa"
-              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
+              className="w-full ps-9 pe-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
             />
-            <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Mail className="w-4 h-4 text-slate-400 absolute start-3 top-3" />
           </div>
         </div>
 
         {/* Phone Number */}
         <div className="space-y-1.5">
           <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-            Mobile Number (KSA)
+            {tAuth("phone")}
           </label>
           <div className="relative">
             <input
@@ -233,9 +268,9 @@ function RegisterForm() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+966 50 123 4567"
-              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
+              className="w-full ps-9 pe-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
             />
-            <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Phone className="w-4 h-4 text-slate-400 absolute start-3 top-3" />
           </div>
         </div>
 
@@ -245,7 +280,7 @@ function RegisterForm() {
             <div className="space-y-1.5">
               <label className="text-xs font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1">
                 <Building2 className="w-3.5 h-3.5" />
-                <span>Company / Enterprise Name</span>
+                <span>{tAuth("companyName")}</span>
               </label>
               <input
                 type="text"
@@ -260,13 +295,13 @@ function RegisterForm() {
             <div className="space-y-1.5">
               <label className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1">
                 <FileText className="w-3.5 h-3.5" />
-                <span>Commercial Registration (CR) / Tax ID</span>
+                <span>{tAuth("commercialReg")}</span>
               </label>
               <input
                 type="text"
                 value={commercialReg}
                 onChange={(e) => setCommercialReg(e.target.value)}
-                placeholder="1010884920 (Optional for ZATCA Invoicing)"
+                placeholder="1010884920 (ZATCA Compliant)"
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
               />
             </div>
@@ -277,7 +312,7 @@ function RegisterForm() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-              Password
+              {tAuth("password")}
             </label>
             <div className="relative">
               <input
@@ -286,13 +321,13 @@ function RegisterForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
+                className="w-full ps-9 pe-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
               />
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Lock className="w-4 h-4 text-slate-400 absolute start-3 top-3" />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                className="absolute end-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -305,7 +340,7 @@ function RegisterForm() {
 
           <div className="space-y-1.5">
             <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-              Confirm Password
+              {tAuth("confirmPassword")}
             </label>
             <div className="relative">
               <input
@@ -314,9 +349,9 @@ function RegisterForm() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
+                className="w-full ps-9 pe-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
               />
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Lock className="w-4 h-4 text-slate-400 absolute start-3 top-3" />
             </div>
           </div>
         </div>
@@ -331,20 +366,9 @@ function RegisterForm() {
               className="w-4 h-4 accent-emerald-600 rounded mt-0.5"
             />
             <span>
-              I agree to the{" "}
-              <a
-                href="#terms"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert(
-                    "Terms of Service: All hardware purchases include official Saudi warranty.",
-                  );
-                }}
-                className="font-extrabold text-emerald-700 hover:underline"
-              >
-                Terms of Service
-              </a>{" "}
-              and Privacy Policy.
+              {isRtl
+                ? "أوافق على الشروط والأحكام وسياسة الخصوصية الضريبية"
+                : "I agree to the Terms of Service and Privacy Policy."}
             </span>
           </label>
         </div>
@@ -358,12 +382,16 @@ function RegisterForm() {
           {loading ? (
             <div className="flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Creating Account...</span>
+              <span>{tAuth("registerButton")}...</span>
             </div>
           ) : (
             <>
-              <span>Create Account</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{tAuth("registerButton")}</span>
+              {isRtl ? (
+                <ArrowLeft className="w-4 h-4" />
+              ) : (
+                <ArrowRight className="w-4 h-4" />
+              )}
             </>
           )}
         </button>
@@ -371,12 +399,16 @@ function RegisterForm() {
 
       {/* Footer Login Link */}
       <div className="pt-4 border-t border-slate-100 text-center text-xs font-semibold text-slate-600">
-        Already have an account?{" "}
+        {tAuth("alreadyHaveAccount")}{" "}
         <Link
-          href={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login"}
+          href={
+            redirectUrl
+              ? `/login?redirect=${encodeURIComponent(redirectUrl)}`
+              : "/login"
+          }
           className="font-extrabold text-emerald-700 hover:underline"
         >
-          Sign In Here
+          {tAuth("loginLink")}
         </Link>
       </div>
     </div>
@@ -384,6 +416,8 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
+  const tCommon = useTranslations("common");
+
   return (
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
       <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 py-8 sm:py-12">
@@ -400,7 +434,7 @@ export default function RegisterPage() {
         {/* Security Note */}
         <div className="max-w-lg mx-auto mt-6 text-center text-[11px] text-slate-400 font-medium flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Protected by Samud Shabkat KSA Enterprise Security</span>
+          <span>{tCommon("zatcaVatBadge")}</span>
         </div>
       </div>
     </div>

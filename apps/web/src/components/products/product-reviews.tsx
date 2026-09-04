@@ -23,11 +23,13 @@ export function ProductReviews({
   reviewsCount,
   reviews,
 }: ProductReviewsProps) {
+  const tProducts = useTranslations("products");
+
   return (
     <div className="space-y-6 font-sans">
       {/* Rating Breakdown Header */}
       <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xs">
-        <div className="flex items-center gap-4 text-center md:text-left">
+        <div className="flex items-center gap-4 text-center md:text-start">
           <div className="text-4xl sm:text-5xl font-black text-slate-950">
             {rating.toFixed(1)}
           </div>
@@ -45,7 +47,7 @@ export function ProductReviews({
               ))}
             </div>
             <span className="text-xs font-extrabold text-slate-600">
-              Based on {reviewsCount} verified customer reviews
+              {tProducts("reviewsCount", { count: reviewsCount })}
             </span>
           </div>
         </div>

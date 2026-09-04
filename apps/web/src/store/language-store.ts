@@ -174,6 +174,12 @@ interface LanguageState {
   toggleLanguage: () => void;
 }
 
+export function setLocaleCookie(lang: Language) {
+  if (typeof document !== "undefined") {
+    document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+  }
+}
+
 export const useLanguageStore = create<LanguageState>()(
   persist(
     (set, get) => ({
@@ -182,6 +188,7 @@ export const useLanguageStore = create<LanguageState>()(
       t: enTranslations,
       setLanguage: (lang: Language) => {
         const direction = lang === "ar" ? "rtl" : "ltr";
+        setLocaleCookie(lang);
         if (typeof document !== "undefined") {
           document.documentElement.dir = direction;
           document.documentElement.lang = lang;
@@ -201,6 +208,7 @@ export const useLanguageStore = create<LanguageState>()(
       name: "samud-language-storage",
       onRehydrateStorage: () => (state) => {
         if (state && typeof document !== "undefined") {
+          setLocaleCookie(state.language);
           document.documentElement.dir = state.direction;
           document.documentElement.lang = state.language;
         }

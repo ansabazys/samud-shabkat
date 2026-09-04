@@ -9,16 +9,23 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   AlertCircle,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuthStore } from "@/store/auth-store";
+import { useLanguageStore } from "@/store/language-store";
 import { authApi } from "@/lib/api/auth-api";
 import { Logo } from "@/components/ui/logo";
 
 function LoginForm() {
+  const tAuth = useTranslations("auth");
+  const language = useLanguageStore((state) => state.language);
+  const isRtl = language === "ar";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +50,11 @@ function LoginForm() {
       });
 
       setAuth(response.user, response.tokens);
-      setSuccessMsg("Signed in successfully! Redirecting...");
+      setSuccessMsg(
+        isRtl
+          ? "تم تسجيل الدخول بنجاح! جاري التحويل..."
+          : "Signed in successfully! Redirecting...",
+      );
 
       setTimeout(() => {
         if (redirectUrl) {
@@ -58,19 +69,32 @@ function LoginForm() {
           router.push("/profile");
         }
       }, 700);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Login error:", err);
+      const error = err as {
+        response?: {
+          data?: { message?: unknown; error?: unknown };
+          status?: number;
+        };
+        message?: unknown;
+      };
       const apiMsg =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message;
-      if (err?.response?.status === 401) {
-        setError("Incorrect email or password. Please check your spelling.");
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message;
+      if (error.response?.status === 401) {
+        setError(
+          isRtl
+            ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+            : "Incorrect email or password. Please check your spelling.",
+        );
       } else {
         setError(
           typeof apiMsg === "string"
             ? apiMsg
-            : "Unable to sign in. Please check your email and password.",
+            : isRtl
+              ? "تعذر تسجيل الدخول. يرجى التحقق من البيانات."
+              : "Unable to sign in. Please check your email and password.",
         );
       }
     } finally {
@@ -86,13 +110,12 @@ function LoginForm() {
 
         <div className="space-y-1 w-full">
           <h1 className="text-2xl font-black text-slate-950 uppercase tracking-tight relative inline-block">
-            Sign In to Your Account
+            {tAuth("loginTitle")}
             <span className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-16 h-[3px] bg-[#FFD400] rounded-full" />
           </h1>
 
           <p className="text-xs text-slate-500 font-semibold pt-2">
-            Access your saved addresses, track live KSA shipments, and view
-            ZATCA tax invoices.
+            {tAuth("loginSubtitle")}
           </p>
         </div>
       </div>
@@ -117,7 +140,7 @@ function LoginForm() {
         {/* Email Field */}
         <div className="space-y-1.5">
           <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-            Email Address
+            {tAuth("email")}
           </label>
           <div className="relative">
             <input
@@ -126,9 +149,9 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition"
+              className="w-full ps-9 pe-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition"
             />
-            <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Mail className="w-4 h-4 text-slate-400 absolute start-3 top-3" />
           </div>
         </div>
 
@@ -136,17 +159,21 @@ function LoginForm() {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
-              Password
+              {tAuth("password")}
             </label>
             <a
               href="#forgot"
               onClick={(e) => {
                 e.preventDefault();
-                alert("Password reset instructions sent to your email!");
+                alert(
+                  isRtl
+                    ? "تم إرسال تعليمات استعادة كلمة المرور إلى بريدك الإلكتروني!"
+                    : "Password reset instructions sent to your email!",
+                );
               }}
               className="text-[11px] font-extrabold text-emerald-700 hover:underline"
             >
-              Forgot Password?
+              {tAuth("forgotPassword")}
             </a>
           </div>
           <div className="relative">
@@ -156,13 +183,13 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition"
+              className="w-full ps-9 pe-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition"
             />
-            <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Lock className="w-4 h-4 text-slate-400 absolute start-3 top-3" />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="absolute end-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               {showPassword ? (
                 <EyeOff className="w-4 h-4" />
@@ -181,7 +208,7 @@ function LoginForm() {
               defaultChecked
               className="w-4 h-4 accent-emerald-600 rounded"
             />
-            <span>Keep me signed in</span>
+            <span>{tAuth("rememberMe")}</span>
           </label>
         </div>
 
@@ -194,12 +221,16 @@ function LoginForm() {
           {loading ? (
             <div className="flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Signing In...</span>
+              <span>{tAuth("signingIn")}</span>
             </div>
           ) : (
             <>
-              <span>Sign In</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{tAuth("signInButton")}</span>
+              {isRtl ? (
+                <ArrowLeft className="w-4 h-4" />
+              ) : (
+                <ArrowRight className="w-4 h-4" />
+              )}
             </>
           )}
         </button>
@@ -207,12 +238,16 @@ function LoginForm() {
 
       {/* Footer Register Link */}
       <div className="pt-4 border-t border-slate-100 text-center text-xs font-semibold text-slate-600">
-        Don&apos;t have an account?{" "}
+        {tAuth("dontHaveAccount")}{" "}
         <Link
-          href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"}
+          href={
+            redirectUrl
+              ? `/register?redirect=${encodeURIComponent(redirectUrl)}`
+              : "/register"
+          }
           className="font-extrabold text-emerald-700 hover:underline"
         >
-          Create an Account
+          {tAuth("registerLink")}
         </Link>
       </div>
     </div>
@@ -220,6 +255,8 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const tCommon = useTranslations("common");
+
   return (
     <div className="w-full bg-slate-50/50 min-h-screen text-slate-900 font-sans pb-16">
       <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 py-8 sm:py-12">
@@ -236,7 +273,7 @@ export default function LoginPage() {
         {/* Security Note */}
         <div className="max-w-md mx-auto mt-6 text-center text-[11px] text-slate-400 font-medium flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>256-Bit SSL Encrypted & ZATCA Saudi Tax Compliant</span>
+          <span>{tCommon("zatcaVatBadge")}</span>
         </div>
       </div>
     </div>

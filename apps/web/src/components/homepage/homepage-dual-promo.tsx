@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { ArrowRight, Server, Laptop } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function HomepageDualPromo() {
+  const t = useTranslations("home");
+
   return (
     <section className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 py-8 sm:py-10 bg-white font-sans">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -16,23 +19,21 @@ export function HomepageDualPromo() {
           <div className="space-y-3 flex-1 max-w-[240px] sm:max-w-xs z-10">
             <span className="inline-flex items-center gap-1.5 bg-slate-900 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
               <Server className="w-3 h-3 text-[#FFD400]" />
-              Enterprise Hardware
+              {t("dualPromoEnterpriseTag")}
             </span>
 
             <h3 className="text-base sm:text-xl font-black text-slate-900 uppercase tracking-tight leading-tight group-hover:text-amber-600 transition-colors">
-              High-Performance Switches & Routers
+              {t("dualPromoEnterpriseTitle")}
             </h3>
 
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Up to{" "}
-              <strong className="text-slate-900 font-black">30% OFF</strong>{" "}
-              Cisco & Ubiquiti
+              {t("dualPromoEnterpriseDesc")}
             </p>
 
             <div className="pt-2">
               <span className="inline-flex items-center gap-1 text-xs font-extrabold text-slate-900 group-hover:text-amber-600 uppercase tracking-wider transition-colors">
-                <span>Shop Networking</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                <span>{t("dualPromoEnterpriseBtn")}</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:rotate-180 transition-transform" />
               </span>
             </div>
           </div>
@@ -56,23 +57,21 @@ export function HomepageDualPromo() {
           <div className="space-y-3 flex-1 max-w-[240px] sm:max-w-xs z-10">
             <span className="inline-flex items-center gap-1.5 bg-[#FFD400] text-slate-950 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
               <Laptop className="w-3 h-3 text-slate-950" />
-              Creator & Business
+              {t("dualPromoWorkstationTag")}
             </span>
 
             <h3 className="text-base sm:text-xl font-black text-slate-900 uppercase tracking-tight leading-tight group-hover:text-amber-600 transition-colors">
-              Pro Workstations & MacBooks
+              {t("dualPromoWorkstationTitle")}
             </h3>
 
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Save up to{" "}
-              <strong className="text-slate-900 font-black">800 SAR</strong> on
-              Apple & Dell
+              {t("dualPromoWorkstationDesc")}
             </p>
 
             <div className="pt-2">
               <span className="inline-flex items-center gap-1 text-xs font-extrabold text-slate-900 group-hover:text-amber-600 uppercase tracking-wider transition-colors">
-                <span>Shop Workstations</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                <span>{t("dualPromoWorkstationBtn")}</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:rotate-180 transition-transform" />
               </span>
             </div>
           </div>

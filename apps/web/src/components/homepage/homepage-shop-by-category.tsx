@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useLanguageStore } from "@/store/language-store";
 import {
-  Layers,
   ChevronLeft,
   ChevronRight,
   Laptop,
@@ -17,9 +15,11 @@ import {
   Server,
   FolderTree,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { fetchCategories, type Category } from "@/lib/api";
 
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   networking: Network,
   computers: Laptop,
   servers: Server,
@@ -31,7 +31,7 @@ const ICON_MAP: Record<string, any> = {
 };
 
 export function HomepageShopByCategory() {
-  const t = useLanguageStore((state) => state.t);
+  const t = useTranslations("home");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,21 +50,21 @@ export function HomepageShopByCategory() {
       {/* Header Row */}
       <div className="flex items-center justify-between pb-3 mb-8">
         <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight uppercase relative inline-block">
-          {t.shopByCategoryTitle}
-          <span className="absolute bottom-[-13px] left-0 w-full h-[3px] bg-[#FFD400] rounded-full" />
+          {t("shopByCategoryTitle")}
+          <span className="absolute bottom-[-13px] start-0 w-full h-[3px] bg-[#FFD400] rounded-full" />
         </h2>
 
         {/* Carousel Arrows */}
         <div className="flex items-center gap-2">
           <button
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer"
-            aria-label="Previous Category"
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer rtl:rotate-180"
+            aria-label={t("prevCategory")}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer"
-            aria-label="Next Category"
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer rtl:rotate-180"
+            aria-label={t("nextCategory")}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -75,7 +75,10 @@ export function HomepageShopByCategory() {
       {loading ? (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-5 text-center">
           {[...Array(7)].map((_, i) => (
-            <div key={i} className="flex flex-col items-center justify-center space-y-3">
+            <div
+              key={i}
+              className="flex flex-col items-center justify-center space-y-3"
+            >
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-100 animate-pulse border border-slate-200" />
               <div className="w-16 h-3.5 bg-slate-100 rounded animate-pulse" />
             </div>
@@ -83,7 +86,7 @@ export function HomepageShopByCategory() {
         </div>
       ) : categories.length === 0 ? (
         <div className="py-8 text-center text-xs text-slate-500 font-medium">
-          No categories configured yet. Add categories in the backoffice admin portal.
+          {t("noCategories")}
         </div>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-5 text-center">

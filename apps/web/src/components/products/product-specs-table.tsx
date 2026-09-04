@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface SpecItem {
   key: string;
   value: string;
@@ -10,11 +12,13 @@ interface ProductSpecsTableProps {
 }
 
 export function ProductSpecsTable({ specifications }: ProductSpecsTableProps) {
+  const t = useTranslations("productDetail");
+
   return (
     <div className="w-full bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs font-sans">
       <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-200/80">
         <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">
-          Technical Specifications
+          {t("tabs.specs")}
         </h4>
       </div>
 

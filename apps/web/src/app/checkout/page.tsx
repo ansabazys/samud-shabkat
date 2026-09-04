@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   Truck,
-  Building2,
   Lock,
   ArrowRight,
+  ArrowLeft,
   PackageCheck,
   Printer,
   Store,
@@ -17,22 +16,28 @@ import {
   AlertCircle,
   LogIn,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCartStore } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
-import { ordersApi, type CreateOrderPayload, type OrderRecord } from "@/lib/api/orders-api";
+import { useLanguageStore } from "@/store/language-store";
+import {
+  ordersApi,
+  type CreateOrderPayload,
+  type OrderRecord,
+} from "@/lib/api/orders-api";
 import { Logo } from "@/components/ui/logo";
 
 const STORE_LOCATIONS = [
   {
     id: "loc-1",
     name: "Samud Shabkat - Main IT Hardware & Technology Hub",
-    address: "Technology Market, Main Store Branch",
+    address: "Olaya Street, Riyadh, Saudi Arabia",
     hours: "9:00 AM - 9:00 PM",
   },
   {
     id: "loc-2",
     name: "Samud Shabkat - Distribution & Service Counter",
-    address: "Commercial Center, Secondary Store Branch",
+    address: "King Fahd Road, Riyadh, Saudi Arabia",
     hours: "9:30 AM - 8:30 PM",
   },
 ];
@@ -44,13 +49,16 @@ const CITIES = [
   "Khobar",
   "Mecca",
   "Medina",
-  "Kochi",
-  "Calicut",
-  "Trivandrum",
+  "Tabuk",
+  "Abha",
 ];
 
 export default function CheckoutPage() {
-  const router = useRouter();
+  const tCheckout = useTranslations("checkout");
+  const tCommon = useTranslations("common");
+  const language = useLanguageStore((state) => state.language);
+  const isRtl = language === "ar";
+
   const { items, clearCart, getTotalPrice, getTotalItems } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
 
@@ -63,13 +71,13 @@ export default function CheckoutPage() {
   const [companyName, setCompanyName] = useState("");
   const [vatNumber, setVatNumber] = useState("");
 
-  const [fulfillmentType, setFulfillmentType] = useState<"delivery" | "takeaway">(
-    "takeaway",
-  );
+  const [fulfillmentType, setFulfillmentType] = useState<
+    "delivery" | "takeaway"
+  >("takeaway");
   const [selectedStore, setSelectedStore] = useState("loc-1");
 
-  const [country, setCountry] = useState("India");
-  const [city, setCity] = useState("Kochi");
+  const [country, setCountry] = useState("Saudi Arabia");
+  const [city, setCity] = useState("Riyadh");
   const [district, setDistrict] = useState("");
   const [street, setStreet] = useState("");
 
@@ -80,7 +88,8 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [createdOrderRecord, setCreatedOrderRecord] = useState<OrderRecord | null>(null);
+  const [createdOrderRecord, setCreatedOrderRecord] =
+    useState<OrderRecord | null>(null);
 
   // Pre-fill user data if logged in
   useEffect(() => {
@@ -96,13 +105,13 @@ export default function CheckoutPage() {
   }, [user]);
 
   const subtotal = getTotalPrice();
-  const vatAmount = subtotal * 0.18; // 18% GST / Tax
+  const vatAmount = subtotal * 0.15; // 15% ZATCA VAT
   const shippingFee =
     fulfillmentType === "takeaway"
       ? 0
-      : subtotal >= 5000 || subtotal === 0
+      : subtotal >= 499 || subtotal === 0
         ? 0
-        : 250.0;
+        : 35.0;
   const totalPrice = subtotal + vatAmount + shippingFee;
   const totalItems = getTotalItems();
 
@@ -111,22 +120,38 @@ export default function CheckoutPage() {
     setErrorMessage(null);
 
     if (!isAuthenticated) {
-      setErrorMessage("Please log in or create an account to complete your takeaway order.");
+      setErrorMessage(
+        isRtl
+          ? "يرجى تسجيل الدخول أولاً لإتمام طلبك."
+          : "Please log in or create an account to complete your takeaway order.",
+      );
       return;
     }
 
     if (!firstName || !phone) {
-      setErrorMessage("Please fill in your contact name and phone number.");
+      setErrorMessage(
+        isRtl
+          ? "يرجى إدخال اسمك ورقم الهاتف."
+          : "Please fill in your contact name and phone number.",
+      );
       return;
     }
 
     if (fulfillmentType === "delivery" && !street) {
-      setErrorMessage("Please fill in your delivery street address.");
+      setErrorMessage(
+        isRtl
+          ? "يرجى إدخال عنوان التوصيل."
+          : "Please fill in your delivery street address.",
+      );
       return;
     }
 
     if (items.length === 0) {
-      setErrorMessage("Your cart is empty. Please add products before checking out.");
+      setErrorMessage(
+        isRtl
+          ? "سلة التسوق فارغة."
+          : "Your cart is empty. Please add products before checking out.",
+      );
       return;
     }
 
@@ -151,8 +176,10 @@ export default function CheckoutPage() {
         fulfillmentType:
           fulfillmentType === "takeaway" ? "STORE_PICKUP" : "HOME_DELIVERY",
         paymentMethod:
-          fulfillmentType === "takeaway" ? "CASH_ON_PICKUP" : "CASH_ON_DELIVERY",
-        notes: `Customer: ${firstName} ${lastName}. Email: ${email}. ${vatNumber ? `GST/Tax ID: ${vatNumber}.` : ""}`,
+          fulfillmentType === "takeaway"
+            ? "CASH_ON_PICKUP"
+            : "CASH_ON_DELIVERY",
+        notes: `Customer: ${firstName} ${lastName}. Email: ${email}. ${vatNumber ? `VAT ID: ${vatNumber}.` : ""}`,
         items: items.map((item) => ({
           productId: item.product.id,
           productName: item.product.name,
@@ -167,11 +194,21 @@ export default function CheckoutPage() {
       setCreatedOrderRecord(res);
       setOrderPlaced(true);
       clearCart();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to place order:", err);
+      const error = err as {
+        response?: { data?: { message?: unknown } };
+        message?: unknown;
+      };
       const serverMsg =
-        err?.response?.data?.message || err?.message || "Failed to place order. Please try again.";
-      setErrorMessage(serverMsg);
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to place order. Please try again.";
+      setErrorMessage(
+        typeof serverMsg === "string"
+          ? serverMsg
+          : "Failed to place order. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -184,21 +221,21 @@ export default function CheckoutPage() {
         <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Logo href="/" size="sm" />
-            <span className="text-xs font-bold text-slate-400 border-l border-slate-200 pl-3">
-              Takeaway & Store Ordering
+            <span className="text-xs font-bold text-slate-400 border-s border-slate-200 ps-3">
+              {tCheckout("pageTitle")}
             </span>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
             <Lock className="w-3.5 h-3.5" />
-            <span>Official Invoice & Order System</span>
+            <span>{tCheckout("secureCheckoutBadge")}</span>
           </div>
         </div>
       </div>
 
       {/* Main Checkout Container */}
       <div className="w-full max-w-7xl md:max-w-4/5 mx-auto px-4 md:px-0 pt-6 sm:pt-8">
-        {/* Authentication Notice Banner if user is not logged in */}
+        {/* Authentication Notice Banner */}
         {!isAuthenticated && !orderPlaced && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
             <div className="flex items-center gap-3">
@@ -207,10 +244,12 @@ export default function CheckoutPage() {
               </div>
               <div>
                 <h4 className="text-xs font-black text-amber-950 uppercase tracking-wider">
-                  Account Sign In Required
+                  {tCommon("login")}
                 </h4>
                 <p className="text-xs font-medium text-amber-800">
-                  Please log in to your Samud Shabkat account to place takeaway orders and receive instant status updates.
+                  {isRtl
+                    ? "يرجى تسجيل الدخول لحسابك لإتمام عملية الشراء ومتابعة الطلب."
+                    : "Please log in to your Samud Shabkat account to place orders and receive instant status updates."}
                 </p>
               </div>
             </div>
@@ -219,13 +258,13 @@ export default function CheckoutPage() {
                 href="/login?redirect=/checkout"
                 className="bg-amber-800 hover:bg-amber-900 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl uppercase tracking-wider transition cursor-pointer"
               >
-                Sign In
+                {tCommon("login")}
               </Link>
               <Link
                 href="/register?redirect=/checkout"
                 className="bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-extrabold text-xs px-4 py-2.5 rounded-xl uppercase tracking-wider transition cursor-pointer"
               >
-                Register
+                {tCommon("register")}
               </Link>
             </div>
           </div>
@@ -248,43 +287,46 @@ export default function CheckoutPage() {
 
             <div className="space-y-2">
               <span className="text-xs font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-md">
-                Order Confirmed
+                {tCheckout("orderSuccessTitle")}
               </span>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-950 uppercase tracking-tight">
                 {createdOrderRecord.fulfillmentType === "STORE_PICKUP"
-                  ? "Takeaway Order Confirmed!"
-                  : "Order Placed Successfully!"}
+                  ? isRtl
+                    ? "تم تأكيد طلب الاستلام من المتجر!"
+                    : "Takeaway Order Confirmed!"
+                  : tCheckout("orderSuccessTitle")}
               </h2>
               <p className="text-xs sm:text-sm font-medium text-slate-600 max-w-md mx-auto">
-                Order{" "}
-                <strong className="font-extrabold text-slate-950">
-                  #{createdOrderRecord.orderNumber}
-                </strong>{" "}
-                has been recorded in our system. A confirmation email has been sent to{" "}
-                <strong className="font-extrabold text-slate-950">{email || user?.email}</strong>.
+                {tCheckout("orderSuccessDesc", {
+                  orderNumber: createdOrderRecord.orderNumber,
+                })}
               </p>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-left space-y-3 text-xs">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-start space-y-3 text-xs">
               <div className="flex justify-between font-bold text-slate-700">
-                <span>Fulfillment Method:</span>
+                <span>{tCheckout("shippingAddress")}:</span>
                 <span className="text-emerald-700 font-extrabold uppercase">
                   {createdOrderRecord.fulfillmentType === "STORE_PICKUP"
-                    ? "Store Pickup (Takeaway)"
-                    : "Home Delivery"}
+                    ? isRtl
+                      ? "استلام من المتجر"
+                      : "Store Pickup"
+                    : isRtl
+                      ? "توصيل سريع للمنزل"
+                      : "Home Delivery"}
                 </span>
               </div>
 
               {createdOrderRecord.fulfillmentType === "STORE_PICKUP" ? (
                 <div className="flex justify-between font-bold text-slate-700">
-                  <span>Pickup Store Location:</span>
+                  <span>{isRtl ? "فرع الاستلام:" : "Pickup Location:"}</span>
                   <span className="text-slate-950 font-extrabold">
                     {STORE_LOCATIONS.find((l) => l.id === selectedStore)?.name}
                   </span>
                 </div>
               ) : (
                 <div className="flex justify-between font-bold text-slate-700">
-                  <span>Shipping Address:</span>
+                  <span>{tCheckout("shippingAddress")}:</span>
                   <span className="text-slate-950 font-extrabold">
                     {createdOrderRecord.shippingAddress}
                   </span>
@@ -292,23 +334,32 @@ export default function CheckoutPage() {
               )}
 
               <div className="flex justify-between font-bold text-slate-700">
-                <span>Payment Method:</span>
+                <span>{tCheckout("paymentMethod")}:</span>
                 <span className="text-slate-950 uppercase font-black">
                   {createdOrderRecord.paymentMethod === "CASH_ON_PICKUP"
-                    ? "Pay at Shop Counter"
+                    ? isRtl
+                      ? "الدفع عند الاستلام من الفرع"
+                      : "Pay at Store Counter"
                     : createdOrderRecord.paymentMethod === "CASH_ON_DELIVERY"
-                      ? "Cash on Delivery"
-                      : "Cash Payment"}
+                      ? isRtl
+                        ? "الدفع عند الاستلام (COD)"
+                        : "Cash on Delivery"
+                      : isRtl
+                        ? "دفع إلكتروني"
+                        : "Cash Payment"}
                 </span>
               </div>
 
               <div className="flex justify-between font-bold text-slate-700 pt-3 border-t border-slate-200">
-                <span>Total Payable Amount:</span>
+                <span>{tCommon("total")}:</span>
                 <span className="text-emerald-700 text-sm font-black">
-                  ₹{" "}
-                  {Number(createdOrderRecord.totalAmount).toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
+                  {tCommon("currency")}{" "}
+                  {Number(createdOrderRecord.totalAmount).toLocaleString(
+                    isRtl ? "ar-SA" : "en-US",
+                    {
+                      minimumFractionDigits: 2,
+                    },
+                  )}
                 </span>
               </div>
             </div>
@@ -319,13 +370,13 @@ export default function CheckoutPage() {
                 className="bg-slate-100 hover:bg-slate-200 text-slate-900 font-extrabold text-xs px-5 py-3 rounded-xl uppercase tracking-wider transition inline-flex items-center gap-2 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print Invoice Copy</span>
+                <span>{isRtl ? "طباعة الفاتورة" : "Print Invoice Copy"}</span>
               </button>
               <Link
-                href="/my-orders"
+                href="/orders"
                 className="bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition cursor-pointer"
               >
-                View My Orders
+                {tCommon("myOrders")}
               </Link>
             </div>
           </div>
@@ -336,13 +387,15 @@ export default function CheckoutPage() {
           >
             {/* Left Checkout Steps (8 cols) */}
             <div className="col-span-12 lg:col-span-8 space-y-6">
-              {/* Step 1: Fulfillment Mode Selector (Takeaway vs Delivery) */}
+              {/* Step 1: Fulfillment Mode Selector */}
               <div className="bg-white border border-slate-200/90 rounded-2xl p-6 space-y-4 shadow-2xs">
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-950 flex items-center gap-2 pb-3 border-b border-slate-100">
                   <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
                     1
                   </span>
-                  Select Order Fulfillment Mode
+                  {isRtl
+                    ? "طريقة استلام الطلب"
+                    : "Select Order Fulfillment Mode"}
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -353,7 +406,7 @@ export default function CheckoutPage() {
                       setFulfillmentType("takeaway");
                       setPaymentOption("takeaway_store");
                     }}
-                    className={`p-4 rounded-2xl border text-left flex items-start justify-between transition cursor-pointer ${
+                    className={`p-4 rounded-2xl border text-start flex items-start justify-between transition cursor-pointer ${
                       fulfillmentType === "takeaway"
                         ? "bg-emerald-50 border-emerald-600 text-emerald-950 font-bold shadow-2xs"
                         : "border-slate-200 bg-white hover:bg-slate-50"
@@ -363,15 +416,19 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-2">
                         <Store className="w-4 h-4 text-emerald-700" />
                         <span className="font-black text-sm uppercase">
-                          Store Pickup / Takeaway
+                          {isRtl
+                            ? "استلام من الفرع"
+                            : "Store Pickup / Takeaway"}
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 font-medium">
-                        Pick up directly at our shop counter. No shipping fees. Pay cash/card at shop.
+                        {isRtl
+                          ? "استلم مباشرة من فرعنا بالرياض بدون رسوم شحن."
+                          : "Pick up directly at our shop counter. No shipping fees. Pay cash/card at shop."}
                       </p>
                     </div>
                     <span className="text-xs font-black text-emerald-700 bg-white px-2 py-1 rounded border border-emerald-200">
-                      FREE
+                      {tCommon("free")}
                     </span>
                   </button>
 
@@ -382,7 +439,7 @@ export default function CheckoutPage() {
                       setFulfillmentType("delivery");
                       setPaymentOption("cod");
                     }}
-                    className={`p-4 rounded-2xl border text-left flex items-start justify-between transition cursor-pointer ${
+                    className={`p-4 rounded-2xl border text-start flex items-start justify-between transition cursor-pointer ${
                       fulfillmentType === "delivery"
                         ? "bg-emerald-50 border-emerald-600 text-emerald-950 font-bold shadow-2xs"
                         : "border-slate-200 bg-white hover:bg-slate-50"
@@ -392,15 +449,19 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-2">
                         <Truck className="w-4 h-4 text-blue-600" />
                         <span className="font-black text-sm uppercase">
-                          Express Delivery
+                          {isRtl ? "توصيل سريع" : "Express Delivery"}
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 font-medium">
-                        Doorstep courier delivery to your specified shipping address.
+                        {isRtl
+                          ? "توصيل مباشر إلى باب منزلك أو مقر شركتك."
+                          : "Doorstep courier delivery to your specified shipping address."}
                       </p>
                     </div>
                     <span className="text-xs font-black text-slate-900 bg-white px-2 py-1 rounded border border-slate-200">
-                      {subtotal >= 5000 ? "FREE" : "₹ 250"}
+                      {subtotal >= 499
+                        ? tCommon("free")
+                        : `${tCommon("currency")} 35.00`}
                     </span>
                   </button>
                 </div>
@@ -413,7 +474,7 @@ export default function CheckoutPage() {
                     <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
                       2
                     </span>
-                    Customer & Contact Details
+                    {tCheckout("contactInfo")}
                   </h3>
                   <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
                     <input
@@ -422,19 +483,23 @@ export default function CheckoutPage() {
                       onChange={(e) => setIsB2B(e.target.checked)}
                       className="w-4 h-4 accent-emerald-600 rounded"
                     />
-                    <span>Corporate / Company Order</span>
+                    <span>
+                      {isRtl
+                        ? "طلب تجاري / شركات (B2B)"
+                        : "Corporate / Company Order"}
+                    </span>
                   </label>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
                     <label className="font-extrabold text-slate-700 block mb-1">
-                      First Name *
+                      {tCheckout("firstName")} *
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="John"
+                      placeholder="Ahmed"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -442,12 +507,12 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="font-extrabold text-slate-700 block mb-1">
-                      Last Name *
+                      {tCheckout("lastName")} *
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="Doe"
+                      placeholder="Al-Saud"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -455,12 +520,12 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="font-extrabold text-slate-700 block mb-1">
-                      Email Address *
+                      {tCheckout("email")} *
                     </label>
                     <input
                       type="email"
                       required
-                      placeholder="john@example.com"
+                      placeholder="ahmed@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -468,12 +533,12 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="font-extrabold text-slate-700 block mb-1">
-                      Contact Phone / WhatsApp *
+                      {tCheckout("phone")} *
                     </label>
                     <input
                       type="tel"
                       required
-                      placeholder="+91 98460 00000"
+                      placeholder="+966 50 000 0000"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -485,11 +550,11 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2 border-t border-slate-100">
                     <div>
                       <label className="font-extrabold text-slate-700 block mb-1">
-                        Company Name
+                        {isRtl ? "اسم الشركة" : "Company Name"}
                       </label>
                       <input
                         type="text"
-                        placeholder="Samud Technology Solutions Ltd"
+                        placeholder="Samud Tech Est."
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -497,11 +562,11 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <label className="font-extrabold text-slate-700 block mb-1">
-                        Tax / GST ID
+                        {isRtl ? "الرقم الضريبي ZATCA" : "Tax / VAT ID (ZATCA)"}
                       </label>
                       <input
                         type="text"
-                        placeholder="GSTIN32AAACG1234F1Z5"
+                        placeholder="300000000000003"
                         value={vatNumber}
                         onChange={(e) => setVatNumber(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -518,7 +583,9 @@ export default function CheckoutPage() {
                     <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
                       3
                     </span>
-                    Select Store Pickup Location
+                    {isRtl
+                      ? "اختر فرع الاستلام"
+                      : "Select Store Pickup Location"}
                   </h3>
 
                   <div className="space-y-3">
@@ -540,7 +607,9 @@ export default function CheckoutPage() {
                             {loc.address}
                           </span>
                           <span className="text-[10px] text-emerald-700 font-extrabold block">
-                            Hours: {loc.hours}
+                            {isRtl
+                              ? `أوقات العمل: ${loc.hours}`
+                              : `Hours: ${loc.hours}`}
                           </span>
                         </div>
                         <input
@@ -560,27 +629,30 @@ export default function CheckoutPage() {
                     <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
                       3
                     </span>
-                    Delivery Address
+                    {tCheckout("shippingAddress")}
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
                       <label className="font-extrabold text-slate-700 block mb-1">
-                        Country
+                        {isRtl ? "الدولة" : "Country"}
                       </label>
                       <select
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none"
                       >
-                        <option value="India">India</option>
-                        <option value="Saudi Arabia">Saudi Arabia</option>
-                        <option value="UAE">United Arab Emirates</option>
+                        <option value="Saudi Arabia">
+                          Saudi Arabia (المملكة العربية السعودية)
+                        </option>
+                        <option value="UAE">
+                          United Arab Emirates (الإمارات)
+                        </option>
                       </select>
                     </div>
                     <div>
                       <label className="font-extrabold text-slate-700 block mb-1">
-                        City *
+                        {tCheckout("city")} *
                       </label>
                       <select
                         value={city}
@@ -596,12 +668,12 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <label className="font-extrabold text-slate-700 block mb-1">
-                        District / Area *
+                        {isRtl ? "الحي" : "District / Area"} *
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder="Downtown / Business District"
+                        placeholder={isRtl ? "حي العليا" : "Olaya District"}
                         value={district}
                         onChange={(e) => setDistrict(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -609,12 +681,16 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <label className="font-extrabold text-slate-700 block mb-1">
-                        Street Address *
+                        {tCheckout("streetAddress")} *
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder="Building 4, Tech Park Road"
+                        placeholder={
+                          isRtl
+                            ? "شارع العليا العام، مبنى 12"
+                            : "Olaya Main Road, Building 12"
+                        }
                         value={street}
                         onChange={(e) => setStreet(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:outline-none focus:border-emerald-600"
@@ -630,7 +706,7 @@ export default function CheckoutPage() {
                   <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
                     4
                   </span>
-                  Select Payment Option
+                  {tCheckout("paymentMethod")}
                 </h3>
 
                 <div className="space-y-3 text-xs">
@@ -638,7 +714,7 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setPaymentOption("takeaway_store")}
-                      className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
+                      className={`w-full p-4 rounded-xl border text-start flex items-center justify-between transition cursor-pointer ${
                         paymentOption === "takeaway_store"
                           ? "bg-emerald-50 border-emerald-600 text-emerald-950 font-bold"
                           : "border-slate-200 bg-white hover:bg-slate-50"
@@ -648,10 +724,14 @@ export default function CheckoutPage() {
                         <Store className="w-5 h-5 text-emerald-700 shrink-0" />
                         <div>
                           <span className="font-extrabold block">
-                            Pay at Shop Counter upon Pickup (Takeaway)
+                            {isRtl
+                              ? "الدفع عند الاستلام من الفرع (نقداً أو مدى)"
+                              : "Pay at Shop Counter upon Pickup (Takeaway)"}
                           </span>
                           <span className="text-[11px] text-slate-500 font-medium">
-                            Pay directly with Cash or Card at our shop counter when collecting your products.
+                            {isRtl
+                              ? "ادفع نقداً أو عبر البطاقة عند استلام أجهزتك من المتجر."
+                              : "Pay directly with Cash or Card at our shop counter when collecting your products."}
                           </span>
                         </div>
                       </div>
@@ -662,7 +742,7 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setPaymentOption("cod")}
-                      className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
+                      className={`w-full p-4 rounded-xl border text-start flex items-center justify-between transition cursor-pointer ${
                         paymentOption === "cod"
                           ? "bg-emerald-50 border-emerald-600 text-emerald-950 font-bold"
                           : "border-slate-200 bg-white hover:bg-slate-50"
@@ -672,10 +752,12 @@ export default function CheckoutPage() {
                         <Banknote className="w-5 h-5 text-emerald-700 shrink-0" />
                         <div>
                           <span className="font-extrabold block">
-                            Cash on Delivery (COD)
+                            {tCheckout("cashOnDelivery")}
                           </span>
                           <span className="text-[11px] text-slate-500 font-medium">
-                            Pay cash to the delivery courier upon doorstep package delivery.
+                            {isRtl
+                              ? "ادفع للمندوب عند استلام الشحنة."
+                              : "Pay cash to the delivery courier upon doorstep package delivery."}
                           </span>
                         </div>
                       </div>
@@ -689,13 +771,15 @@ export default function CheckoutPage() {
             <div className="col-span-12 lg:col-span-4 space-y-4">
               <div className="bg-white border border-slate-200/90 rounded-2xl p-6 space-y-6 shadow-2xs">
                 <h3 className="text-sm font-black uppercase tracking-wider text-slate-950 pb-3 border-b border-slate-100">
-                  Order Summary ({totalItems} items)
+                  {tCheckout("orderSummary")} ({totalItems} {tCommon("item")})
                 </h3>
 
                 {/* Items List */}
                 <div className="space-y-3 max-h-48 overflow-y-auto no-scrollbar">
                   {items.length === 0 ? (
-                    <p className="text-xs text-slate-500 font-medium">No items in cart.</p>
+                    <p className="text-xs text-slate-500 font-medium">
+                      {tCheckout("emptyCart")}
+                    </p>
                   ) : (
                     items.map((item) => (
                       <div
@@ -706,10 +790,12 @@ export default function CheckoutPage() {
                           {item.quantity}x {item.product.name}
                         </span>
                         <span className="text-slate-950 shrink-0">
-                          ₹{" "}
+                          {tCommon("currency")}{" "}
                           {(
                             Number(item.product.price) * item.quantity
-                          ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          ).toLocaleString(isRtl ? "ar-SA" : "en-US", {
+                            minimumFractionDigits: 2,
+                          })}
                         </span>
                       </div>
                     ))
@@ -719,43 +805,47 @@ export default function CheckoutPage() {
                 {/* Price Breakdown */}
                 <div className="space-y-2 text-xs font-bold pt-3 border-t border-slate-100">
                   <div className="flex justify-between text-slate-600">
-                    <span>Subtotal</span>
+                    <span>{tCommon("subtotal")}</span>
                     <span className="text-slate-950">
-                      ₹{" "}
-                      {subtotal.toLocaleString("en-IN", {
+                      {tCommon("currency")}{" "}
+                      {subtotal.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                         minimumFractionDigits: 2,
                       })}
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>
-                      Fulfillment (
+                      {isRtl ? "الشحن والتوصيل" : "Fulfillment"} (
                       {fulfillmentType === "takeaway"
-                        ? "Store Pickup"
-                        : "Express Delivery"}
+                        ? isRtl
+                          ? "استلام من الفرع"
+                          : "Store Pickup"
+                        : isRtl
+                          ? "توصيل سريع"
+                          : "Express Delivery"}
                       )
                     </span>
                     <span className="text-slate-950">
                       {shippingFee === 0
-                        ? "FREE"
-                        : `₹ ${shippingFee.toFixed(2)}`}
+                        ? tCommon("free")
+                        : `${tCommon("currency")} ${shippingFee.toFixed(2)}`}
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <span>Estimated Tax (18%)</span>
+                    <span>{tCommon("zatcaVatIncluded")}</span>
                     <span className="text-slate-950">
-                      ₹{" "}
-                      {vatAmount.toLocaleString("en-IN", {
+                      {tCommon("currency")}{" "}
+                      {vatAmount.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                         minimumFractionDigits: 2,
                       })}
                     </span>
                   </div>
 
                   <div className="flex justify-between text-base font-black text-slate-950 pt-3 border-t border-slate-200">
-                    <span>Total Amount</span>
+                    <span>{tCommon("total")}</span>
                     <span className="text-emerald-700">
-                      ₹{" "}
-                      {totalPrice.toLocaleString("en-IN", {
+                      {tCommon("currency")}{" "}
+                      {totalPrice.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                         minimumFractionDigits: 2,
                       })}
                     </span>
@@ -771,23 +861,23 @@ export default function CheckoutPage() {
                   {submitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Processing Order...</span>
+                      <span>{tCheckout("processing")}</span>
                     </>
                   ) : (
                     <>
-                      <span>
-                        {fulfillmentType === "takeaway"
-                          ? "Confirm Takeaway Order"
-                          : "Place Order"}
-                      </span>
-                      <ArrowRight className="w-4 h-4" />
+                      <span>{tCheckout("placeOrder")}</span>
+                      {isRtl ? (
+                        <ArrowLeft className="w-4 h-4" />
+                      ) : (
+                        <ArrowRight className="w-4 h-4" />
+                      )}
                     </>
                   )}
                 </button>
 
                 <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-500 pt-1">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Official Business Ordering Platform</span>
+                  <span>{tCommon("zatcaVatBadge")}</span>
                 </div>
               </div>
             </div>

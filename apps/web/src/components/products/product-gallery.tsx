@@ -28,14 +28,14 @@ export function ProductGallery({
       {/* Main Preview Container */}
       <div className="relative aspect-4/3 sm:aspect-square w-full rounded-2xl bg-slate-50 border border-slate-200/90 p-4 overflow-hidden shadow-2xs group">
         {/* Badges */}
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 pointer-events-none">
+        <div className="absolute top-4 start-4 end-4 flex items-center justify-between z-10 pointer-events-none">
           {badge && (
             <span className="bg-[#15803d] text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-2xs">
               {badge}
             </span>
           )}
           {discount && (
-            <span className="bg-blue-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-2xs ml-auto">
+            <span className="bg-blue-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-2xs ms-auto">
               {discount} OFF
             </span>
           )}

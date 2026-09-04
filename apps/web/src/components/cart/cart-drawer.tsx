@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Lock,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function CartDrawer() {
   const {
@@ -29,7 +30,8 @@ export function CartDrawer() {
     getTotalItems,
   } = useCartStore();
 
-  const t = useLanguageStore((state) => state.t);
+  const tCart = useTranslations("cart");
+  const tCommon = useTranslations("common");
   const language = useLanguageStore((state) => state.language);
   const isRtl = language === "ar";
 
@@ -82,8 +84,8 @@ export function CartDrawer() {
           isRtl ? "left-0 pr-0 sm:pr-10" : "right-0 pl-0 sm:pl-10"
         } max-w-full flex`}
       >
-        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col border-l border-slate-200/80">
-          {/* Drawer Header - Clean White Theme Matching Main Header */}
+        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col border-l rtl:border-l-0 rtl:border-r border-slate-200/80">
+          {/* Drawer Header */}
           <div className="px-6 py-4.5 bg-white text-slate-900 flex items-center justify-between border-b border-slate-200/90">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
@@ -91,7 +93,7 @@ export function CartDrawer() {
               </div>
               <div>
                 <h2 className="text-sm font-black uppercase tracking-wider flex items-center gap-2 text-slate-950">
-                  <span>{t.yourCart}</span>
+                  <span>{tCart("yourCart")}</span>
                   <span className="bg-amber-400 text-slate-950 text-xs px-2.5 py-0.5 rounded-full font-black shadow-2xs">
                     {totalItems}
                   </span>
@@ -106,7 +108,7 @@ export function CartDrawer() {
             <button
               onClick={() => setDrawerOpen(false)}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer border border-transparent hover:border-slate-200"
-              aria-label="Close Cart Drawer"
+              aria-label={tCommon("close")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -119,32 +121,14 @@ export function CartDrawer() {
                 <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
                 {amountForFreeShipping > 0 ? (
                   <span>
-                    {isRtl ? (
-                      <>
-                        أضف{" "}
-                        <strong className="font-black text-emerald-950">
-                          {amountForFreeShipping.toFixed(2)} {t.currency}
-                        </strong>{" "}
-                        للحصول على شحن سريع مجاني
-                      </>
-                    ) : (
-                      <>
-                        Add{" "}
-                        <strong className="font-black text-emerald-950">
-                          {t.currency} {amountForFreeShipping.toFixed(2)}
-                        </strong>{" "}
-                        for Free KSA Express Delivery
-                      </>
-                    )}
+                    {tCart("freeShippingProgress", {
+                      amount: amountForFreeShipping.toFixed(2),
+                    })}
                   </span>
                 ) : (
                   <span className="font-black text-emerald-950 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 inline shrink-0" />
-                    <span>
-                      {isRtl
-                        ? "تم تفعيل الشحن السريع المجاني بكافة المناطق!"
-                        : "Unlocked Free KSA Express Delivery!"}
-                    </span>
+                    <span>{tCart("freeDeliveryNotice")}</span>
                   </span>
                 )}
               </div>
@@ -166,12 +150,10 @@ export function CartDrawer() {
                 </div>
                 <div className="space-y-1.5">
                   <h3 className="text-base font-black text-slate-950 uppercase tracking-tight">
-                    {t.emptyCartMessage}
+                    {tCart("emptyCartTitle")}
                   </h3>
                   <p className="text-xs font-medium text-slate-500 max-w-xs leading-relaxed">
-                    {isRtl
-                      ? "تصفح أجهزة الشبكات والكمبيوتر ومحطات العمل لإضافة المنتجات إلى سلتك."
-                      : "Explore our enterprise hardware and networking catalog to add products."}
+                    {tCart("emptyCartDesc")}
                   </p>
                 </div>
                 <Link
@@ -179,7 +161,7 @@ export function CartDrawer() {
                   onClick={() => setDrawerOpen(false)}
                   className="bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3.5 rounded-xl uppercase tracking-wider transition cursor-pointer shadow-xs hover:shadow-md flex items-center gap-2"
                 >
-                  <span>{t.catalog}</span>
+                  <span>{tCart("startShopping")}</span>
                   {isRtl ? (
                     <ArrowLeft className="w-4 h-4" />
                   ) : (
@@ -213,18 +195,18 @@ export function CartDrawer() {
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider">
-                            {isRtl ? "متوفر" : "In Stock"}
+                            {tCommon("inStock")}
                           </span>
                           <button
                             onClick={() => removeItem(item.product.id)}
                             className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-lg transition cursor-pointer"
-                            title={isRtl ? "حذف المنتج" : "Remove item"}
+                            title={tCart("clearCart")}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                         <Link
-                          href={`/products/${item.product.id}`}
+                          href={`/products/${item.product.slug || item.product.id}`}
                           onClick={() => setDrawerOpen(false)}
                           className="text-xs font-bold text-slate-900 hover:text-emerald-700 transition line-clamp-2 leading-snug block"
                         >
@@ -259,22 +241,22 @@ export function CartDrawer() {
                         </div>
 
                         {/* Price Breakdown */}
-                        <div className="text-right">
+                        <div className="text-right rtl:text-left">
                           <span className="text-xs font-black text-slate-950 block">
+                            {tCommon("currency")}{" "}
                             {itemTotal.toLocaleString(
                               isRtl ? "ar-SA" : "en-US",
                               { minimumFractionDigits: 2 },
-                            )}{" "}
-                            {t.currency}
+                            )}
                           </span>
                           {item.quantity > 1 && (
                             <span className="text-[10px] text-slate-400 font-semibold block">
-                              (
+                              ({tCommon("currency")}{" "}
                               {Number(item.product.price).toLocaleString(
                                 isRtl ? "ar-SA" : "en-US",
                                 { minimumFractionDigits: 2 },
                               )}{" "}
-                              {t.currency} / unit)
+                              / {tCommon("item")})
                             </span>
                           )}
                         </div>
@@ -305,70 +287,55 @@ export function CartDrawer() {
                   </span>
                 </div>
                 <p className="text-xs font-bold text-emerald-950">
-                  {isRtl ? (
-                    <>
-                      أو 4 دفعات بدون فوائد بقيمة{" "}
-                      <strong className="font-black text-emerald-900">
-                        {installmentAmount} {t.currency}
-                      </strong>{" "}
-                      /شهر
-                    </>
-                  ) : (
-                    <>
-                      Or 4 interest-free payments of{" "}
-                      <strong className="font-black text-emerald-900">
-                        {t.currency} {installmentAmount}
-                      </strong>
-                      /mo
-                    </>
-                  )}
+                  {tCommon("installmentsText", { amount: installmentAmount })}{" "}
+                  <strong>{tCommon("tabbyOrTamara")}</strong>
                 </p>
               </div>
 
               {/* Price Breakdown Details */}
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-slate-600 font-medium">
-                  <span>{t.subtotal}</span>
+                  <span>{tCommon("subtotal")}</span>
                   <span className="font-extrabold text-slate-900">
+                    {tCommon("currency")}{" "}
                     {subtotal.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                       minimumFractionDigits: 2,
-                    })}{" "}
-                    {t.currency}
+                    })}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-slate-600 font-medium">
-                  <span>{isRtl ? "الشحن المتوقع" : "Estimated Shipping"}</span>
+                  <span>{tCart("deliveryFee")}</span>
                   <span>
                     {deliveryFee === 0 ? (
                       <strong className="text-emerald-700 font-black">
-                        {isRtl ? "مجاني" : "FREE"}
+                        {tCommon("free")}
                       </strong>
                     ) : (
                       <strong className="text-slate-900 font-extrabold">
-                        {deliveryFee.toFixed(2)} {t.currency}
+                        {tCommon("currency")} {deliveryFee.toFixed(2)}
                       </strong>
                     )}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-slate-600 font-medium">
-                  <span>{t.vatTaxIncluded}</span>
+                  <span>{tCommon("zatcaVatIncluded")}</span>
                   <span className="font-extrabold text-slate-900">
+                    {tCommon("currency")}{" "}
                     {vatAmount.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                       minimumFractionDigits: 2,
-                    })}{" "}
-                    {t.currency}
+                    })}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-base font-black text-slate-950 pt-2.5 border-t border-slate-200">
-                  <span>{isRtl ? "المجموع الكلي" : "Total Amount"}</span>
+                  <span>{tCommon("total")}</span>
                   <span className="text-emerald-700">
+                    {tCommon("currency")}{" "}
                     {totalPrice.toLocaleString(isRtl ? "ar-SA" : "en-US", {
                       minimumFractionDigits: 2,
-                    })}{" "}
-                    {t.currency}
+                    })}
                   </span>
                 </div>
               </div>
@@ -380,7 +347,7 @@ export function CartDrawer() {
                   onClick={() => setDrawerOpen(false)}
                   className="w-full bg-[#15803d] hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm py-3.5 rounded-xl uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md active:scale-[0.99]"
                 >
-                  <span>{t.proceedToCheckout}</span>
+                  <span>{tCart("proceedToCheckout")}</span>
                   {isRtl ? (
                     <ArrowLeft className="w-4 h-4" />
                   ) : (
@@ -393,7 +360,7 @@ export function CartDrawer() {
                   onClick={() => setDrawerOpen(false)}
                   className="w-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-extrabold text-xs py-3 rounded-xl uppercase tracking-wider transition flex items-center justify-center cursor-pointer hover:border-slate-300 shadow-2xs"
                 >
-                  {isRtl ? "عرض صفحة السلة الكاملة" : "View Full Cart Page"}
+                  {tCart("continueShopping")}
                 </Link>
               </div>
 
@@ -419,7 +386,7 @@ export function CartDrawer() {
 
                 <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{t.zatcaVatInvoice}</span>
+                  <span>{tCommon("zatcaVatBadge")}</span>
                   <span>•</span>
                   <Lock className="w-3 h-3 text-slate-400 inline" />
                   <span>SSL</span>
